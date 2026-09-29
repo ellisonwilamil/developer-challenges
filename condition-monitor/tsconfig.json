@@ -5,6 +5,9 @@
   "references": [
     {
       "path": "./libs/shared"
+    },
+    {
+      "path": "./apps/api"
     }
   ],
   "compilerOptions": {}

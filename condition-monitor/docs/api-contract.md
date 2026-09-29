@@ -9,7 +9,8 @@ item are in [assumptions.md](assumptions.md).
 - **Base path:** `/api`, without a version: the API has one client, in the same
   repository, and both change together.
 - **Authentication:** every route requires the session cookie set by login, except
-  `POST /api/auth/login`. Without a valid cookie the answer is `401`.
+  `POST /api/auth/login` and `GET /api/health`. Without a valid cookie the answer is
+  `401`.
 - **Format:** JSON, except the CSV upload (`multipart/form-data`).
 - **Identifiers:** UUIDs.
 - **Timestamps:** ISO 8601 with an explicit offset, such as `2026-09-29T10:00:00Z`.
@@ -82,6 +83,10 @@ A conflict lists the records involved:
 }
 ```
 
+Errors raised by the framework itself, such as an unknown route, carry the type
+`about:blank`, which RFC 9457 reserves for problems with no meaning beyond their HTTP
+status. The `urn:condition-monitor:error:*` types are raised by the API's own rules.
+
 ### Pagination
 
 Paginated lists take `page` (from 1), `pageSize`, `sort` and `order` (`asc` or
@@ -93,6 +98,11 @@ Paginated lists take `page` (from 1), `pageSize`, `sort` and `order` (`asc` or
 
 `sort` accepts only the keys listed for each route. The primary key is always the
 last sort key, so items never skip or repeat between pages (B8).
+
+## Health
+
+`GET /api/health` is public and answers `200 { "status": "ok" }` while the API process
+is up. Docker, CI and the web app use it to know the API is reachable.
 
 ## Authentication
 
