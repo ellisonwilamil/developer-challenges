@@ -28,8 +28,8 @@ To be written once the application runs end to end.
 
 ## Assumptions
 
-The challenge leaves several points open. Each one will be recorded here with the
-decision taken.
+The challenge leaves several points open. Each one is recorded with the decision
+taken in [docs/assumptions.md](docs/assumptions.md).
 
 ## Architecture
 
