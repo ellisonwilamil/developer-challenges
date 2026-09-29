@@ -40,7 +40,7 @@ with an `errors` list that points at what failed:
 
 ```json
 {
-  "type": "https://condition-monitor/errors/validation",
+  "type": "urn:condition-monitor:error:validation",
   "title": "Invalid request",
   "status": 422,
   "detail": "2 fields are invalid.",
@@ -55,7 +55,7 @@ A CSV error names the line (the header is line 1); a JSON reading names its inde
 
 ```json
 {
-  "type": "https://condition-monitor/errors/import",
+  "type": "urn:condition-monitor:error:import",
   "title": "Import rejected",
   "status": 422,
   "detail": "3 lines are invalid. Nothing was stored.",
@@ -71,7 +71,7 @@ A conflict lists the records involved:
 
 ```json
 {
-  "type": "https://condition-monitor/errors/conflict",
+  "type": "urn:condition-monitor:error:conflict",
   "title": "Machine type cannot change",
   "status": 409,
   "detail": "2 monitoring points are not valid for Pump.",
