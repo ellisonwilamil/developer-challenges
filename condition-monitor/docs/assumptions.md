@@ -146,9 +146,11 @@ vibration; computing in the database keeps the latency budget.
 **C7. Empty series.** Metrics come back as `null`, with a count of zero. Null means
 "unknown"; zero would claim a measurement that never happened.
 
-**C8. Size limits.** Each submission accepts up to 10,000 readings, and each series has
-a maximum size. The limits are explicit, and the error states which one was exceeded.
-They are what makes the latency target a promise rather than a hope.
+**C8. Size limits.** Each submission accepts up to 10,000 readings, and each series up
+to 50,000, about one year at the 10-minute interval. The series limit is an estimate
+from that interval, to be confirmed by the load test. The limits are explicit, and the
+error states which one was exceeded. They are what makes the latency target a promise
+rather than a hope.
 
 **C9. What a sensor sends.** The three sensor models measure triaxial vibration and
 temperature. The time-series stored here are telemetry: scalar values over time.

@@ -37,6 +37,7 @@ taken in [docs/assumptions.md](docs/assumptions.md).
 
 Entities, relations and database rules in [docs/domain-model.md](docs/domain-model.md).
 Components, workspace layout and data flows in [docs/architecture.md](docs/architecture.md).
+REST endpoints, payloads and error format in [docs/api-contract.md](docs/api-contract.md).
 
 ## Testing
 
