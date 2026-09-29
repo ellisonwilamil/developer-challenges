@@ -58,6 +58,70 @@
             "buildTarget": "api:build:production"
           }
         }
+      },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "inputs": [
+          "{projectRoot}/prisma/schema.prisma"
+        ],
+        "outputs": [
+          "{projectRoot}/src/generated/prisma"
+        ],
+        "options": {
+          "command": "prisma generate",
+          "cwd": "{projectRoot}"
+        }
+      },
+      "prisma-migrate": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "prisma-generate"
+        ],
+        "options": {
+          "command": "prisma migrate dev",
+          "cwd": "{projectRoot}"
+        }
+      },
+      "prisma-deploy": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "prisma migrate deploy",
+          "cwd": "{projectRoot}"
+        }
+      },
+      "build": {
+        "dependsOn": [
+          "^build",
+          "prisma-generate"
+        ]
+      },
+      "typecheck": {
+        "dependsOn": [
+          "^build",
+          "prisma-generate"
+        ]
+      },
+      "test": {
+        "dependsOn": [
+          "^build",
+          "prisma-generate"
+        ]
+      },
+      "lint": {
+        "dependsOn": [
+          "prisma-generate"
+        ]
+      },
+      "test-integration": {
+        "executor": "@nx/jest:jest",
+        "dependsOn": [
+          "prisma-generate"
+        ],
+        "options": {
+          "jestConfig": "{projectRoot}/jest.integration.config.cts",
+          "runInBand": true
+        }
       }
     },
     "tags": [
@@ -68,6 +132,8 @@
     "@nestjs/common": "11.2.6",
     "@nestjs/core": "11.2.6",
     "@nestjs/platform-express": "11.2.6",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
     "tslib": "2.8.1"

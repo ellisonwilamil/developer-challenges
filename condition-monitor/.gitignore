@@ -28,3 +28,6 @@ Thumbs.db
 
 vitest.config.*.timestamp*
 test-output
+
+# Prisma client, generated from apps/api/prisma/schema.prisma
+apps/api/src/generated

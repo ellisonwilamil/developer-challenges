@@ -9,6 +9,8 @@ describe('API over HTTP', () => {
   let baseUrl: string;
 
   beforeAll(async () => {
+    // No route here touches the database; the client only needs a URL to be built.
+    process.env.DATABASE_URL ??= 'postgresql://unused@localhost:5432/unused';
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);

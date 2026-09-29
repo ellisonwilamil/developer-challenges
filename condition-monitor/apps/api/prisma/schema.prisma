@@ -1,0 +1,13 @@
+// Data model of the API (docs/domain-model.md). Tables arrive with the feature slices,
+// one migration per change. What Prisma cannot express (CHECK constraints, partial and
+// NULLS NOT DISTINCT indexes) is written as SQL in the migrations (ADR 0006).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}

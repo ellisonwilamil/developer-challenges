@@ -12,6 +12,7 @@ export default [
       '**/coverage',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
+      '**/src/generated',
     ],
   },
   {

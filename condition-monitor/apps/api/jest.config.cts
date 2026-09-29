@@ -10,6 +10,8 @@ module.exports = {
   displayName: 'api',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
+  // Integration tests need PostgreSQL and run through the test-integration target.
+  testPathIgnorePatterns: ['\\.integration\\.spec\\.ts$'],
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
