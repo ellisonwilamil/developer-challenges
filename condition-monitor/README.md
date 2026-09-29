@@ -16,7 +16,9 @@ commits.
 
 ## Stack
 
-To be decided, one architecture decision record per choice.
+An Nx monorepo with a React and Vite frontend (Material UI 5, Redux Toolkit), a
+NestJS API and PostgreSQL 16 through Prisma. Each choice is recorded as an
+architecture decision record in [docs/adr](docs/adr/README.md).
 
 ## Repository layout
 
