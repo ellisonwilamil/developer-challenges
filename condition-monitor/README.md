@@ -36,7 +36,7 @@ taken in [docs/assumptions.md](docs/assumptions.md).
 ## Architecture
 
 Entities, relations and database rules in [docs/domain-model.md](docs/domain-model.md).
-Architecture overview to be documented.
+Components, workspace layout and data flows in [docs/architecture.md](docs/architecture.md).
 
 ## Testing
 
