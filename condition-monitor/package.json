@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "lint": "nx run-many -t lint",
@@ -22,7 +22,7 @@
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
-    "@types/node": "22.20.4",
+    "@types/node": "24.19.0",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "nx": "23.2.1",
