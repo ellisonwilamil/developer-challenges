@@ -33,7 +33,8 @@ taken in [docs/assumptions.md](docs/assumptions.md).
 
 ## Architecture
 
-To be documented: domain model and architecture overview.
+Entities, relations and database rules in [docs/domain-model.md](docs/domain-model.md).
+Architecture overview to be documented.
 
 ## Testing
 
