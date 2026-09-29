@@ -1,0 +1,27 @@
+# compiled output
+dist
+tmp
+out-tsc
+
+# dependencies
+node_modules
+
+# environment
+.env
+
+# IDEs and editors
+/.idea
+.vscode/*
+!.vscode/extensions.json
+
+# misc
+/coverage
+npm-debug.log
+
+# system files
+.DS_Store
+Thumbs.db
+
+# Nx
+.nx/cache
+.nx/workspace-data
