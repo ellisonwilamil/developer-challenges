@@ -33,8 +33,13 @@ authentication mechanism the challenge does not ask for.
 points, and no minimum is enforced at creation. The sentence describes a capability,
 not a rule; enforcing a minimum would block step-by-step registration.
 
-**B2. Unique names.** A machine name is unique per user, and a monitoring point name is
-unique per machine. Two identical names in the list would be indistinguishable.
+**B2. Free names.** Machine and monitoring point names are free text, as the challenge
+asks for arbitrary names, and may repeat: only an empty name, or one longer than 100
+characters, is rejected. Identification does not depend on names: a machine is
+identified by its tag (B10), and a monitoring point by its machine and position (B11).
+An earlier version of this assumption made names unique, to tell rows apart in the
+list; the tag and the position columns made that restriction redundant, and it
+contradicted the challenge.
 
 **B3. Point and sensor.** A monitoring point has at most one sensor, and a sensor sits
 on exactly one monitoring point, as a physical sensor is mounted at one location.

@@ -45,17 +45,16 @@ erDiagram
     Machine {
         uuid id PK
         uuid sectorId FK
-        uuid ownerId FK "copy of Sector.ownerId"
         enum type "PUMP or FAN"
-        int number "unique per sector and type"
-        string name "unique per owner"
+        int number "1 to 999, unique per sector and type"
+        string name "free text"
     }
     MonitoringPoint {
         uuid id PK
         uuid machineId FK
         enum machineType FK "copy of Machine.type"
         enum location "positions of the machine type, or OTHER"
-        string name "unique per machine"
+        string name "free text"
     }
     Sensor {
         uuid id PK
@@ -92,11 +91,9 @@ for no answer.
 | Sector name is 1 to 100 characters, trimmed | `CHECK` on `sectors.name` | B9 |
 | A user who owns sectors cannot be deleted | `ON DELETE RESTRICT` from `Sector` to `User` | A4 |
 | Machine tag unique across the system | unique index on `(sectorId, type, number)` | B10 |
-| Machine number positive | `CHECK (number >= 1)` | B10 |
-| Machine name unique per owner | unique index on `(ownerId, name)` | B2 |
-| Machine owner equals its sector's owner | composite foreign key, see below | A4 |
+| Machine number from 1 to 999 | `CHECK (number BETWEEN 1 AND 999)` | B10 |
+| Machine and point names are 1 to 100 characters, trimmed, and may repeat | `CHECK`, no unique index | B2 |
 | Sector with machines cannot be deleted | `ON DELETE RESTRICT` from `Machine` to `Sector` | B9 |
-| Monitoring point name unique per machine | unique index on `(machineId, name)` | B2 |
 | Position belongs to the machine type | `CHECK` on `MonitoringPoint`, see below | B11 |
 | Position unique per machine, except `OTHER` | partial unique index on `(machineId, location) WHERE location <> 'OTHER'` | B11 |
 | At most one sensor per monitoring point | unique index on `Sensor.monitoringPointId` | B3 |
@@ -114,12 +111,11 @@ It requires PostgreSQL 15 or later.
 
 ## Rules that span tables
 
-Three rules depend on a value that lives in another table: the machine's owner comes
-from its sector, and both the allowed positions and the allowed sensor models depend on
-the machine type. A plain `CHECK` only sees its own row, so the value is copied down
-the chain, and a composite foreign key keeps each copy equal to its source:
+Two rules depend on a value that lives in another table: both the allowed positions
+and the allowed sensor models depend on the machine type. A plain `CHECK` only sees its
+own row, so the type is copied down the chain, and a composite foreign key keeps each
+copy equal to its source:
 
-- `Machine (sectorId, ownerId)` references `Sector (id, ownerId)`.
 - `MonitoringPoint (machineId, machineType)` references `Machine (id, type)`, with
   `ON UPDATE CASCADE`.
 - `Sensor (monitoringPointId, machineType)` references

@@ -157,9 +157,9 @@ A machine:
 |---|---|---|---|
 | `GET /api/machines` | query `sectorId?`, pagination | `200`, page of machines | `422` |
 | `GET /api/machines/next-number` | query `sectorId`, `type` | `200 { number, tag }` | `404` sector, `422` |
-| `POST /api/machines` | `{ sectorId, type, number, name }` | `201`, the machine | `404` sector, `409` tag or name in use, `422` |
+| `POST /api/machines` | `{ sectorId, type, number, name }` | `201`, the machine | `404` sector, `409` tag in use, `422` |
 | `GET /api/machines/:id` | none | `200`, the machine with its monitoring points and `counts` | `404` |
-| `PATCH /api/machines/:id` | `{ name?, type?, sectorId?, number? }` | `200`, the machine | `404`, `409` tag or name in use, `409` type change invalidates points (B5), `422` |
+| `PATCH /api/machines/:id` | `{ name?, type?, sectorId?, number? }` | `200`, the machine | `404`, `409` tag in use, `409` type change invalidates points (B5), `422` |
 | `DELETE /api/machines/:id` | none | `204`, cascades to points, sensors, series and readings (B6) | `404` |
 
 List: `pageSize` defaults to 10, at most 100; `sort` is one of `tag` (default),
@@ -188,7 +188,7 @@ A monitoring point:
 | Route | Request | Success | Errors |
 |---|---|---|---|
 | `GET /api/monitoring-points` | pagination | `200`, page of points | `422` |
-| `POST /api/machines/:id/monitoring-points` | `{ positions: [{ location, name? }] }` | `201 { items }`, the points created | `404` machine, `409` position or name in use, `422` position not of the machine type |
+| `POST /api/machines/:id/monitoring-points` | `{ positions: [{ location, name? }] }` | `201 { items }`, the points created | `404` machine, `409` position in use, `422` position not of the machine type |
 | `GET /api/monitoring-points/:id` | none | `200`, the point | `404` |
 | `PATCH /api/monitoring-points/:id` | `{ name?, location? }` | `200`, the point | `404`, `409`, `422` |
 | `DELETE /api/monitoring-points/:id` | none | `204`, cascades to sensor, series and readings | `404` |
