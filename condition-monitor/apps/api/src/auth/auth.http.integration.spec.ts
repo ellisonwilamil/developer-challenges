@@ -1,4 +1,4 @@
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../app/app.module';
@@ -11,13 +11,13 @@ const credentials = { email: 'operator@plant.test', password: 'correct horse bat
 
 /** The whole login flow over HTTP, against the test database. */
 describe('authentication over HTTP', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let prisma: PrismaService;
   let baseUrl: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication({ logger: false });
+    app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
     configureApp(app);
     await app.listen(0);
     baseUrl = `${await app.getUrl()}/api`;

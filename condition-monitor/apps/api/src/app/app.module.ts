@@ -9,6 +9,7 @@ import { MonitoringPointsModule } from '../monitoring-points/monitoring-points.m
 import { PrismaModule } from '../prisma/prisma.module';
 import { SectorsModule } from '../sectors/sectors.module';
 import { SensorsModule } from '../sensors/sensors.module';
+import { TimeSeriesModule } from '../time-series/time-series.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SensorsModule } from '../sensors/sensors.module';
     MachinesModule,
     MonitoringPointsModule,
     SensorsModule,
+    TimeSeriesModule,
   ],
   controllers: [HealthController],
   providers: [

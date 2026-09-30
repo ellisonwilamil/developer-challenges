@@ -34,3 +34,32 @@ export function invalid(errors: { field: string; message: string }[]): ProblemEx
     errors,
   });
 }
+
+export const IMPORT_PROBLEM_TYPE = 'urn:condition-monitor:error:import';
+
+/** At most this many errors travel in one answer; the detail still gives the full count. */
+export const MAX_LISTED_ERRORS = 100;
+
+/**
+ * A submission of readings refused as a whole (assumption C4). Each error points at the
+ * reading by its index in a JSON body or its line in a CSV file. The count covers every
+ * invalid reading, even when only the first ones are listed, so nothing is left unsaid.
+ */
+export function importRejected(
+  unit: 'reading' | 'line',
+  errors: Record<string, unknown>[],
+  invalidCount = errors.length,
+): ProblemException {
+  const listed = errors.slice(0, MAX_LISTED_ERRORS);
+  const counted =
+    invalidCount === 1 ? `1 ${unit} is invalid.` : `${invalidCount} ${unit}s are invalid.`;
+  const truncated =
+    listed.length < invalidCount ? ` The first ${listed.length} errors are listed.` : '';
+  return new ProblemException({
+    type: IMPORT_PROBLEM_TYPE,
+    title: 'Import rejected',
+    status: 422,
+    detail: `${counted} Nothing was stored.${truncated}`,
+    errors: listed,
+  });
+}

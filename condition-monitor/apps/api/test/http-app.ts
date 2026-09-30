@@ -1,4 +1,4 @@
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app/app.module';
 import { configureApp } from '../src/app/configure-app';
@@ -11,7 +11,7 @@ import { seedUser } from '../src/seed/seed-user';
  */
 export async function startHttpApp() {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app: INestApplication = moduleRef.createNestApplication({ logger: false });
+  const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
   configureApp(app);
   await app.listen(0);
   const baseUrl = `${await app.getUrl()}/api`;

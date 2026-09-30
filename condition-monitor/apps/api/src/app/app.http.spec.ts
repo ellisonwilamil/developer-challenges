@@ -1,4 +1,4 @@
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { AppModule } from './app.module';
 import { configureApp } from './configure-app';
@@ -8,7 +8,7 @@ import { configureApp } from './configure-app';
  * decided before any query runs is tested here: the database is not needed.
  */
 describe('API over HTTP', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let baseUrl: string;
 
   beforeAll(async () => {
@@ -16,7 +16,7 @@ describe('API over HTTP', () => {
     process.env.DATABASE_URL ??= 'postgresql://unused@localhost:5432/unused';
     process.env.JWT_SECRET ??= 'unit-test-secret-of-at-least-32-characters';
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication({ logger: false });
+    app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
     configureApp(app);
     await app.listen(0);
     baseUrl = `${await app.getUrl()}/api`;
