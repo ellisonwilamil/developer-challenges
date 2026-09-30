@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { MachineType, SensorModel } from '../generated/prisma/client';
+import type { Location, MachineType, SensorModel } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** Where a serial number is installed, to tell the user why it cannot go elsewhere. */
@@ -10,6 +10,17 @@ export interface SensorPlacement {
   sectorCode: string;
   machineType: MachineType;
   machineNumber: number;
+}
+
+/** An installed sensor with what identifies its place. */
+export interface InstalledRow {
+  serialNumber: string;
+  model: SensorModel;
+  monitoringPoint: {
+    id: string;
+    location: Location;
+    machine: { type: MachineType; number: number; sector: { code: string } };
+  };
 }
 
 /** The only place that queries the sensors table (ADR 0002). */
@@ -46,6 +57,31 @@ export class SensorsRepository {
       machineType: point.machine.type,
       machineNumber: point.machine.number,
     };
+  }
+
+  /**
+   * The sensors installed at points of the user, by serial number, optionally limited to
+   * the given serial numbers.
+   */
+  listInstalled(ownerId: string, serialNumbers?: string[]): Promise<InstalledRow[]> {
+    return this.prisma.sensor.findMany({
+      where: {
+        monitoringPoint: { machine: { sector: { ownerId } } },
+        ...(serialNumbers ? { serialNumber: { in: serialNumbers } } : {}),
+      },
+      orderBy: { serialNumber: 'asc' },
+      select: {
+        serialNumber: true,
+        model: true,
+        monitoringPoint: {
+          select: {
+            id: true,
+            location: true,
+            machine: { select: { type: true, number: true, sector: { select: { code: true } } } },
+          },
+        },
+      },
+    });
   }
 
   /** Installs the sensor, or replaces the one already at the point (B14). */

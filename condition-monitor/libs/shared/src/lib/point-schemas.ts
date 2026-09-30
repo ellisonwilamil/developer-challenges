@@ -135,3 +135,28 @@ export interface MachineDetail extends Machine {
   monitoringPoints: MonitoringPoint[];
   counts: MachineCounts;
 }
+
+/**
+ * Query of `GET /api/sensors`: optional serial numbers, one or several, as a URL repeats
+ * a parameter (`?serialNumber=A&serialNumber=B`). None means every installed sensor.
+ */
+export const listSensorsQuerySchema = z.object({
+  serialNumber: z
+    .preprocess(
+      (value) => (value === undefined || Array.isArray(value) ? value : [value]),
+      z.array(serialNumberSchema).max(1000, 'At most 1,000 serial numbers.'),
+    )
+    .optional(),
+});
+
+export type ListSensorsQuery = z.infer<typeof listSensorsQuerySchema>;
+
+/** An installed sensor and where it is, as the simulator discovers it (C13). */
+export interface SensorInstallation {
+  serialNumber: string;
+  model: SensorModel;
+  monitoringPointId: string;
+  location: Location;
+  machineTag: string;
+  machineType: MachineType;
+}

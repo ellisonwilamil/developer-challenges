@@ -7,6 +7,7 @@ import {
   sensorModelMapping,
   type InstallSensorRequest,
   type MonitoringPoint,
+  type SensorInstallation,
 } from '@condition-monitor/shared';
 import { isUniqueViolation, violatedCheck } from '../common/database/prisma-errors';
 import { conflict, invalid, notFound } from '../common/problem/problems';
@@ -72,6 +73,26 @@ export class SensorsService {
     const updated = await this.points.findOwned(ownerId, pointId);
     if (!updated) throw notFound('Monitoring point');
     return toMonitoringPoint(updated);
+  }
+
+  /** The installed sensors of the user, as the simulator discovers them (C13). */
+  async listInstalled(ownerId: string, serialNumbers?: string[]): Promise<SensorInstallation[]> {
+    const rows = await this.sensors.listInstalled(ownerId, serialNumbers);
+    return rows.map((row) => {
+      const machineType = machineTypeMapping.fromDb(row.monitoringPoint.machine.type);
+      return {
+        serialNumber: row.serialNumber,
+        model: sensorModelMapping.fromDb(row.model),
+        monitoringPointId: row.monitoringPoint.id,
+        location: row.monitoringPoint.location,
+        machineTag: buildMachineTag(
+          row.monitoringPoint.machine.sector.code,
+          machineType,
+          row.monitoringPoint.machine.number,
+        ),
+        machineType,
+      };
+    });
   }
 
   /** Removes the sensor and keeps the point, where another sensor can be installed. */
