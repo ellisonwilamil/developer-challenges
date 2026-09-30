@@ -116,6 +116,7 @@
       "test-integration": {
         "executor": "@nx/jest:jest",
         "dependsOn": [
+          "^build",
           "prisma-generate"
         ],
         "options": {
@@ -126,7 +127,7 @@
       "prisma-seed": {
         "executor": "nx:run-commands",
         "dependsOn": [
-          "prisma-generate"
+          "build"
         ],
         "options": {
           "command": "prisma db seed",
@@ -139,6 +140,7 @@
     ]
   },
   "dependencies": {
+    "@condition-monitor/shared": "*",
     "@nestjs/common": "11.2.6",
     "@nestjs/core": "11.2.6",
     "@nestjs/platform-express": "11.2.6",

@@ -1,3 +1,4 @@
+import { PASSWORD_MAX_BYTES, passwordByteLength } from '@condition-monitor/shared';
 import type { PrismaClient } from '../generated/prisma/client';
 import { hashPassword, verifyPassword } from '../auth/password';
 
@@ -26,6 +27,10 @@ export async function seedUser(
   }
   if (!password || password.length < MIN_PASSWORD_LENGTH) {
     throw new Error(`SEED_USER_PASSWORD must have at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  // The same limit the login form applies: a longer password could never log in.
+  if (passwordByteLength(password) > PASSWORD_MAX_BYTES) {
+    throw new Error(`SEED_USER_PASSWORD must have at most ${PASSWORD_MAX_BYTES} bytes.`);
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });

@@ -52,6 +52,16 @@ describe('seedUser', () => {
     expect(await verifyPassword('new password 1', user.passwordHash)).toBe(true);
   });
 
+  it('refuses a password the login would reject: 72 bytes pass, 73 do not', async () => {
+    await expect(
+      seedUser(prisma, { email: 'operator@plant.test', password: 'a'.repeat(73) }),
+    ).rejects.toThrow('at most 72 bytes');
+    expect(await prisma.user.count()).toBe(0);
+    expect(await seedUser(prisma, { email: 'operator@plant.test', password: 'a'.repeat(72) })).toBe(
+      'created',
+    );
+  });
+
   it('refuses to run without an email or with a short password, before writing', async () => {
     await expect(seedUser(prisma, { email: undefined, password: 'long enough' })).rejects.toThrow(
       'SEED_USER_EMAIL is not set',

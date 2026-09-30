@@ -1,12 +1,12 @@
-import { join } from 'node:path';
-import { loadEnvFile } from '../src/config/load-env-file';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { seedUser } from '../src/seed/seed-user';
+import { PrismaService } from '../prisma/prisma.service';
+import { seedUser } from './seed-user';
 
-// Run by `prisma db seed` (configured in prisma.config.ts). Idempotent, so it can run
-// after every migration.
-loadEnvFile(join(__dirname, '../../../.env'));
-
+/**
+ * Entry point of the seed, bundled with the API as `dist/seed.js` and run by
+ * `prisma db seed`. Prisma loads `.env` through prisma.config.ts and passes the
+ * variables on; elsewhere they come from the environment. Idempotent, so it can run
+ * after every migration.
+ */
 async function main(): Promise<void> {
   const prisma = new PrismaService();
   try {
