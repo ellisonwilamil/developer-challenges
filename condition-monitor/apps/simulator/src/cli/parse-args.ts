@@ -1,4 +1,6 @@
 import { parseArgs } from 'node:util';
+import { MAX_READINGS_PER_SERIES } from '@condition-monitor/shared';
+import { backfillCount, maxBackfillDays } from '../telemetry/grid';
 
 /**
  * Commands of the simulator (assumption C13): `backfill` sends a history and exits,
@@ -28,9 +30,6 @@ export const DEFAULTS = {
   seed: 1,
   days: 30,
 } as const;
-
-/** 50,000 readings per series at the default interval is about 347 days (C8). */
-const MAX_BACKFILL_DAYS = 365;
 
 export function parseCommand(argv: string[]): Command {
   const { values, positionals } = parseArgs({
@@ -70,7 +69,17 @@ export function parseCommand(argv: string[]): Command {
   };
 
   if (name === 'backfill') {
-    const days = integerOption('days', values.days, DEFAULTS.days, 1, MAX_BACKFILL_DAYS);
+    // A series holds at most 50,000 readings (C8): the longest history depends on the
+    // interval, 347 days at 10 minutes. A longer one would be refused by the API.
+    const maxDays = maxBackfillDays(common.intervalMinutes);
+    const asked =
+      typeof values.days === 'string' && /^\d+$/.test(values.days) ? Number(values.days) : 0;
+    if (asked > maxDays) {
+      throw new UsageError(
+        `--days ${asked} at a ${common.intervalMinutes}-minute interval gives ${backfillCount(asked, common.intervalMinutes).toLocaleString('en-US')} readings per series, above the limit of ${MAX_READINGS_PER_SERIES.toLocaleString('en-US')}: at most ${maxDays} days.`,
+      );
+    }
+    const days = integerOption('days', values.days, DEFAULTS.days, 1, maxDays);
     return { name, days, ...common };
   }
   if (name === 'live') {

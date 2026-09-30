@@ -42,12 +42,17 @@ describe('parseCommand', () => {
     });
   });
 
-  it('accepts the limits of --days and rejects beyond them', () => {
+  it('limits --days to the 50,000 readings a series holds, at the chosen interval (C8)', () => {
     expect(parseCommand(['backfill', '--days', '1'])).toMatchObject({ days: 1 });
-    expect(parseCommand(['backfill', '--days', '365'])).toMatchObject({ days: 365 });
-    expect(() => parseCommand(['backfill', '--days', '0'])).toThrow(UsageError);
-    expect(() => parseCommand(['backfill', '--days', '366'])).toThrow(
-      '--days must be an integer from 1 to 365.',
+    expect(parseCommand(['backfill', '--days', '347'])).toMatchObject({ days: 347 });
+    expect(parseCommand(['backfill', '--days', '365', '--interval', '15'])).toMatchObject({
+      days: 365,
+    });
+    expect(() => parseCommand(['backfill', '--days', '0'])).toThrow(
+      '--days must be an integer from 1 to 347.',
+    );
+    expect(() => parseCommand(['backfill', '--days', '348'])).toThrow(
+      '--days 348 at a 10-minute interval gives 50,112 readings per series, above the limit of 50,000: at most 347 days.',
     );
   });
 

@@ -102,5 +102,8 @@
     "tags": [
       "type:app"
     ]
+  },
+  "dependencies": {
+    "@condition-monitor/shared": "*"
   }
 }

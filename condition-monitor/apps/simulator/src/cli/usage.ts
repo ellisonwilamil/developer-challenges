@@ -13,7 +13,8 @@ Options:
   --interval <minutes>  time between readings. Default: ${DEFAULTS.intervalMinutes}.
   --seed <integer>      seed of the noise; the same seed gives the same values.
                         Default: ${DEFAULTS.seed}.
-  --days <days>         backfill only: days of history, up to 365. Default: ${DEFAULTS.days}.
+  --days <days>         backfill only: days of history. Default: ${DEFAULTS.days}.
+                        A series holds at most 50,000 readings: 347 days at 10 minutes.
   --api-url <url>       Default: ${DEFAULTS.apiUrl}.
   -h, --help            show this help
 `;
