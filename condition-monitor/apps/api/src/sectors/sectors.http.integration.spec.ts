@@ -37,7 +37,7 @@ describe('sectors over HTTP', () => {
 
     expect(created).toEqual({
       status: 201,
-      body: { id: expect.any(String), code: 'PM1', name: 'Paper machine 1' },
+      body: { id: expect.any(String), code: 'PM1', name: 'Paper machine 1', machineCount: 0 },
     });
     const list = await operator('GET', '/sectors');
     expect(await readJson<Sector[]>(list)).toEqual([created.body]);

@@ -4,11 +4,12 @@ import { AuthModule } from '../auth/auth.module';
 import { ProblemDetailsFilter } from '../common/problem/problem-details.filter';
 import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { HealthController } from '../health/health.controller';
+import { MachinesModule } from '../machines/machines.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SectorsModule } from '../sectors/sectors.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, SectorsModule],
+  imports: [PrismaModule, AuthModule, SectorsModule, MachinesModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { CreateSectorRequest, Sector, UpdateSectorRequest } from '@condition-monitor/shared';
-import { isRecordNotFound, isUniqueViolation } from '../common/database/prisma-errors';
+import {
+  isForeignKeyViolation,
+  isRecordNotFound,
+  isUniqueViolation,
+} from '../common/database/prisma-errors';
 import { conflict, notFound } from '../common/problem/problems';
 import { SectorsRepository } from './sectors.repository';
 
@@ -29,10 +33,23 @@ export class SectorsService {
     }
   }
 
+  /**
+   * The database refuses to delete a sector that still has machines (B9). The count is
+   * read after the refusal, so it reports the machines that actually blocked it.
+   */
   async delete(ownerId: string, id: string): Promise<void> {
     try {
       await this.sectors.delete(ownerId, id);
     } catch (error) {
+      if (isForeignKeyViolation(error)) {
+        const machines = await this.sectors.countMachines(id);
+        const noun = machines === 1 ? 'machine' : 'machines';
+        throw conflict(
+          'Sector has machines',
+          `The sector still has ${machines} ${noun}. Move or delete them first.`,
+          [{ machineCount: machines }],
+        );
+      }
       throw this.translate(error);
     }
   }

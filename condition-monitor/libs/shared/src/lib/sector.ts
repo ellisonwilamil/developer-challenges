@@ -41,4 +41,6 @@ export interface Sector {
   id: string;
   code: string;
   name: string;
+  /** Machines installed in the sector; a sector with machines cannot be deleted (B9). */
+  machineCount: number;
 }

@@ -7,11 +7,13 @@ const dry: Sector = {
   id: '11111111-1111-4111-8111-111111111111',
   code: 'DRY',
   name: 'Drying section',
+  machineCount: 0,
 };
 const prs: Sector = {
   id: '22222222-2222-4222-8222-222222222222',
   code: 'PRS',
   name: 'Press section',
+  machineCount: 0,
 };
 
 const session = {
