@@ -5,3 +5,4 @@ export * from './lib/quantity.js';
 export * from './lib/tag.js';
 export * from './lib/mapping.js';
 export * from './lib/auth.js';
+export * from './lib/sector.js';
