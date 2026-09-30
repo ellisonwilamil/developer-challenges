@@ -1,9 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 
-/**
- * Liveness check for Docker, CI and the web app. It is public: the session guard,
- * added with authentication, will leave it open.
- */
+/** Liveness check for Docker, CI and the web app, open without a session. */
+@Public()
 @Controller('health')
 export class HealthController {
   @Get()

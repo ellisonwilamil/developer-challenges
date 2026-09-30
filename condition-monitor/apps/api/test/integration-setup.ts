@@ -10,3 +10,6 @@ if (!testUrl) {
   throw new Error('DATABASE_URL_TEST is not set. Copy .env.example to .env or set it.');
 }
 process.env.DATABASE_URL = testUrl;
+
+// Tests sign their own sessions; a fixed secret keeps them independent of .env.
+process.env.JWT_SECRET = 'integration-test-secret-of-at-least-32-chars';
