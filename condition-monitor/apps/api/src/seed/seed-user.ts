@@ -7,7 +7,13 @@ export interface SeedUserInput {
   password: string | undefined;
 }
 
-export type SeedUserResult = 'created' | 'password updated' | 'rehashed' | 'unchanged';
+export type SeedUserStatus = 'created' | 'password updated' | 'rehashed' | 'unchanged';
+
+export interface SeedUserResult {
+  status: SeedUserStatus;
+  /** The seeded user, owner of the seeded sector. */
+  userId: string;
+}
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -35,23 +41,25 @@ export async function seedUser(
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (!existing) {
-    await prisma.user.create({ data: { email, passwordHash: await hashPassword(password) } });
-    return 'created';
+    const created = await prisma.user.create({
+      data: { email, passwordHash: await hashPassword(password) },
+    });
+    return { status: 'created', userId: created.id };
   }
   if (await verifyPassword(password, existing.passwordHash)) {
     if (!needsRehash(existing.passwordHash)) {
-      return 'unchanged';
+      return { status: 'unchanged', userId: existing.id };
     }
     // Same password, older work factor: redo the hash so logins get the current cost.
     await prisma.user.update({
       where: { email },
       data: { passwordHash: await hashPassword(password) },
     });
-    return 'rehashed';
+    return { status: 'rehashed', userId: existing.id };
   }
   await prisma.user.update({
     where: { email },
     data: { passwordHash: await hashPassword(password) },
   });
-  return 'password updated';
+  return { status: 'password updated', userId: existing.id };
 }

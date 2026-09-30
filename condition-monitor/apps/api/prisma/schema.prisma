@@ -24,6 +24,23 @@ model User {
   passwordHash String   @map("password_hash")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sectors      Sector[]
 
   @@map("users")
+}
+
+/// A physical area of the plant where machines are installed, in a single level
+/// (assumption B9). The code is unique across the system, since it prefixes machine tags
+/// (B10). A user who still owns sectors cannot be deleted: nothing cascades silently.
+model Sector {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId   String   @map("owner_id") @db.Uuid
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId])
+  @@map("sectors")
 }

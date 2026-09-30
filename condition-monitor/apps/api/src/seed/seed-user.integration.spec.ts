@@ -22,7 +22,7 @@ describe('seedUser', () => {
     });
 
     const user = await prisma.user.findUniqueOrThrow({ where: { email: 'operator@plant.test' } });
-    expect(result).toBe('created');
+    expect(result.status).toBe('created');
     expect(user.passwordHash).not.toContain('correct horse battery');
     expect(await verifyPassword('correct horse battery', user.passwordHash)).toBe(true);
   });
@@ -35,7 +35,7 @@ describe('seedUser', () => {
     const result = await seedUser(prisma, input);
 
     const after = await prisma.user.findUniqueOrThrow({ where: { email: input.email } });
-    expect(result).toBe('unchanged');
+    expect(result.status).toBe('unchanged');
     expect(after).toEqual(before);
     expect(await prisma.user.count()).toBe(1);
   });
@@ -49,8 +49,8 @@ describe('seedUser', () => {
     });
     const input = { email: 'operator@plant.test', password: 'correct horse battery' };
 
-    expect(await seedUser(prisma, input)).toBe('rehashed');
-    expect(await seedUser(prisma, input)).toBe('unchanged');
+    expect((await seedUser(prisma, input)).status).toBe('rehashed');
+    expect((await seedUser(prisma, input)).status).toBe('unchanged');
     const user = await prisma.user.findUniqueOrThrow({ where: { email: input.email } });
     expect(bcrypt.getRounds(user.passwordHash)).toBe(BCRYPT_COST);
   });
@@ -64,7 +64,7 @@ describe('seedUser', () => {
     });
 
     const user = await prisma.user.findUniqueOrThrow({ where: { email: 'operator@plant.test' } });
-    expect(result).toBe('password updated');
+    expect(result.status).toBe('password updated');
     expect(await verifyPassword('new password 1', user.passwordHash)).toBe(true);
   });
 
@@ -73,9 +73,9 @@ describe('seedUser', () => {
       seedUser(prisma, { email: 'operator@plant.test', password: 'a'.repeat(73) }),
     ).rejects.toThrow('at most 72 bytes');
     expect(await prisma.user.count()).toBe(0);
-    expect(await seedUser(prisma, { email: 'operator@plant.test', password: 'a'.repeat(72) })).toBe(
-      'created',
-    );
+    expect(
+      (await seedUser(prisma, { email: 'operator@plant.test', password: 'a'.repeat(72) })).status,
+    ).toBe('created');
   });
 
   it('refuses to run without an email or with a short password, before writing', async () => {
@@ -85,8 +85,8 @@ describe('seedUser', () => {
     await expect(
       seedUser(prisma, { email: 'operator@plant.test', password: '1234567' }),
     ).rejects.toThrow('at least 8 characters');
-    expect(await seedUser(prisma, { email: 'operator@plant.test', password: '12345678' })).toBe(
-      'created',
-    );
+    expect(
+      (await seedUser(prisma, { email: 'operator@plant.test', password: '12345678' })).status,
+    ).toBe('created');
   });
 });

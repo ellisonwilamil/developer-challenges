@@ -1,4 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { SEED_SECTOR, seedSector } from './seed-sector';
 import { seedUser } from './seed-user';
 
 /**
@@ -14,7 +15,9 @@ async function main(): Promise<void> {
       email: process.env.SEED_USER_EMAIL,
       password: process.env.SEED_USER_PASSWORD,
     });
-    console.log(`Seed user: ${user}.`);
+    console.log(`Seed user: ${user.status}.`);
+    const sector = await seedSector(prisma, user.userId);
+    console.log(`Seed sector ${SEED_SECTOR.code}: ${sector}.`);
   } finally {
     await prisma.$disconnect();
   }
