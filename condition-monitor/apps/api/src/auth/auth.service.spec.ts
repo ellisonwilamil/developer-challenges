@@ -57,15 +57,19 @@ describe('AuthService', () => {
   });
 
   it('rejects a wrong password and an unknown email with the same message', async () => {
-    const wrongPassword = service.login({ email: user.email, password: 'wrong password' });
-    const unknownEmail = service.login({ email: 'nobody@plant.test', password: 'whatever' });
+    // Both attempts are awaited together: awaiting one first would leave the other's
+    // rejection unhandled whenever it settled first, failing the test at random.
+    const [wrongPassword, unknownEmail] = await Promise.allSettled([
+      service.login({ email: user.email, password: 'wrong password' }),
+      service.login({ email: 'nobody@plant.test', password: 'whatever' }),
+    ]);
 
-    await expect(wrongPassword).rejects.toThrow(
-      new UnauthorizedException('Invalid email or password.'),
-    );
-    await expect(unknownEmail).rejects.toThrow(
-      new UnauthorizedException('Invalid email or password.'),
-    );
+    for (const attempt of [wrongPassword, unknownEmail]) {
+      expect(attempt).toEqual({
+        status: 'rejected',
+        reason: new UnauthorizedException('Invalid email or password.'),
+      });
+    }
   });
 
   it('checks a password even when the email is unknown, so timing reveals nothing', async () => {
