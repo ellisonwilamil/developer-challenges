@@ -1,6 +1,7 @@
 import type { LoginRequest, SessionUser } from '@condition-monitor/shared';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { ApiError, fieldErrorsOf, getJson, postJson, type FieldError } from '../../api/http';
+import { toFailure, type RequestFailure } from '../../api/failure';
+import { ApiError, getJson, postJson } from '../../api/http';
 
 /**
  * Who is using the app. `unknown` until the API has answered: not having asked yet, or
@@ -34,12 +35,7 @@ export const fetchSession = createAsyncThunk<SessionUser | null, void, { rejectV
 );
 
 /** Why a login failed, in the shape the form shows it. */
-export interface LoginFailure {
-  /** HTTP status, or null when the API could not be reached. */
-  status: number | null;
-  message: string;
-  fieldErrors: FieldError[];
-}
+export type LoginFailure = RequestFailure;
 
 /**
  * Logs in, then reads the user from the new session. A failure keeps the API's message
@@ -52,18 +48,7 @@ export const login = createAsyncThunk<SessionUser, LoginRequest, { rejectValue: 
       await postJson('/auth/login', credentials);
       return await getJson<SessionUser>('/auth/me');
     } catch (error) {
-      if (error instanceof ApiError) {
-        return rejectWithValue({
-          status: error.status,
-          message: error.message,
-          fieldErrors: fieldErrorsOf(error),
-        });
-      }
-      return rejectWithValue({
-        status: null,
-        message: 'Could not reach the API. Try again in a moment.',
-        fieldErrors: [],
-      });
+      return rejectWithValue(toFailure(error));
     }
   },
 );

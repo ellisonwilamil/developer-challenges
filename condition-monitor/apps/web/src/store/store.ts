@@ -4,7 +4,9 @@ import {
   createListenerMiddleware,
   isRejected,
 } from '@reduxjs/toolkit';
+import type { RequestFailure } from '../api/failure';
 import { healthSlice } from '../features/health/health-slice';
+import { sectorsSlice } from '../features/sectors/sectors-slice';
 import {
   fetchSession,
   login,
@@ -16,6 +18,7 @@ import {
 const rootReducer = combineReducers({
   [healthSlice.name]: healthSlice.reducer,
   [sessionSlice.name]: sessionSlice.reducer,
+  [sectorsSlice.name]: sectorsSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
@@ -30,7 +33,7 @@ function createSessionListener() {
   listener.startListening({
     predicate: (action) =>
       isRejected(action) &&
-      action.error.code === '401' &&
+      answeredUnauthorized(action) &&
       !login.rejected.match(action) &&
       !fetchSession.rejected.match(action),
     effect: (_action, api) => {
@@ -38,6 +41,16 @@ function createSessionListener() {
     },
   });
   return listener.middleware;
+}
+
+/**
+ * A thunk rejects either with a thrown ApiError, whose status survives as `error.code`,
+ * or with a RequestFailure value, which carries it as `payload.status`.
+ */
+function answeredUnauthorized(action: { error: { code?: string }; payload?: unknown }): boolean {
+  return (
+    action.error.code === '401' || (action.payload as RequestFailure | undefined)?.status === 401
+  );
 }
 
 /** A factory, so each test gets a fresh store with the state it needs. */

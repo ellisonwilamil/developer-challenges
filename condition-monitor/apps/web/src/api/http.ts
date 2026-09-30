@@ -52,6 +52,14 @@ export function postJson<T = void>(path: string, body?: unknown): Promise<T> {
   return request<T>('POST', path, body);
 }
 
+export function patchJson<T>(path: string, body: unknown): Promise<T> {
+  return request<T>('PATCH', path, body);
+}
+
+export function deleteJson(path: string): Promise<void> {
+  return request<void>('DELETE', path);
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method,

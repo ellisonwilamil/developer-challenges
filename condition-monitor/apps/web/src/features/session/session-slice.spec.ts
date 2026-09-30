@@ -87,6 +87,19 @@ describe('session', () => {
     expect(store.getState().session.status).toBe('anonymous');
   });
 
+  it('ends the session when a request rejects with a 401 failure value', async () => {
+    mockApi({ 'GET /api/auth/me': () => Response.json(operator) });
+    const store = createStore();
+    await store.dispatch(fetchSession());
+    const anyRequest = createAsyncThunk('sectors/load', (_: void, { rejectWithValue }) =>
+      rejectWithValue({ status: 401, message: 'Authentication required.', fieldErrors: [] }),
+    );
+
+    await store.dispatch(anyRequest());
+
+    expect(store.getState().session.status).toBe('anonymous');
+  });
+
   it('keeps the session when another request fails for another reason', async () => {
     mockApi({ 'GET /api/auth/me': () => Response.json(operator) });
     const store = createStore();
