@@ -4,3 +4,4 @@ export * from './lib/location.js';
 export * from './lib/quantity.js';
 export * from './lib/tag.js';
 export * from './lib/mapping.js';
+export * from './lib/auth.js';
