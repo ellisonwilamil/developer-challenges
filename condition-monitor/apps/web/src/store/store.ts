@@ -8,6 +8,7 @@ import type { RequestFailure } from '../api/failure';
 import { healthSlice } from '../features/health/health-slice';
 import { machineDetailSlice } from '../features/machine-detail/machine-detail-slice';
 import { machinesSlice } from '../features/machines/machines-slice';
+import { monitoringPointsSlice } from '../features/monitoring-points/monitoring-points-slice';
 import { sectorsSlice } from '../features/sectors/sectors-slice';
 import {
   fetchSession,
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   [sectorsSlice.name]: sectorsSlice.reducer,
   [machinesSlice.name]: machinesSlice.reducer,
   [machineDetailSlice.name]: machineDetailSlice.reducer,
+  [monitoringPointsSlice.name]: monitoringPointsSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
