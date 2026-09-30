@@ -33,7 +33,13 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "src/testing/**"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    {
+      "path": "../../libs/shared/tsconfig.lib.json"
+    }
+  ]
 }

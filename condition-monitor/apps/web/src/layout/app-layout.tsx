@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { ApiStatusChip } from './api-status';
 import { NAVIGATION } from './navigation';
+import { UserMenu } from './user-menu';
 
 const DRAWER_WIDTH = 240;
 
@@ -62,6 +63,7 @@ export function AppLayout() {
             Condition Monitor
           </Typography>
           <ApiStatusChip />
+          <UserMenu />
         </Toolbar>
       </AppBar>
       <Drawer

@@ -3,12 +3,19 @@
  * `problem` is null when the response was not Problem Details, such as a proxy error.
  */
 export class ApiError extends Error {
+  /**
+   * The status as text. Redux Toolkit keeps `code` when it serializes a thunk error, so
+   * the status survives into rejected actions.
+   */
+  readonly code: string;
+
   constructor(
     readonly status: number,
     readonly problem: ProblemDetails | null,
   ) {
     super(problem?.detail ?? `Request failed with status ${status}.`);
     this.name = 'ApiError';
+    this.code = String(status);
   }
 }
 
@@ -20,19 +27,46 @@ export interface ProblemDetails {
   errors?: Record<string, unknown>[];
 }
 
+/** A field error of a 422 answer, as the API contract defines it. */
+export interface FieldError {
+  field: string;
+  message: string;
+}
+
+export function fieldErrorsOf(error: ApiError): FieldError[] {
+  return (error.problem?.errors ?? []).filter(
+    (item): item is Record<string, unknown> & FieldError =>
+      typeof item['field'] === 'string' && typeof item['message'] === 'string',
+  );
+}
+
 /**
  * Every API call goes through here. The API is reached under `/api` on the same origin:
  * the Vite dev server proxies it, so the session cookie is sent (ADR 0008).
  */
-export async function getJson<T>(path: string): Promise<T> {
+export function getJson<T>(path: string): Promise<T> {
+  return request<T>('GET', path);
+}
+
+export function postJson<T = void>(path: string, body?: unknown): Promise<T> {
+  return request<T>('POST', path, body);
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
+    method,
     credentials: 'same-origin',
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!response.ok) {
     throw new ApiError(response.status, await readProblem(response));
   }
-  return (await response.json()) as T;
+  // 204 No Content has no body to read.
+  return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
 async function readProblem(response: Response): Promise<ProblemDetails | null> {

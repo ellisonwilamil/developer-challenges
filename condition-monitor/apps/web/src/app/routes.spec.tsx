@@ -1,36 +1,11 @@
-import { ThemeProvider } from '@mui/material/styles';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { createMemoryRouter, RouterProvider } from 'react-router';
-import { createStore } from '../store/store';
-import { routes } from './routes';
-import { theme } from './theme';
+import { fireEvent, screen } from '@testing-library/react';
+import { mockApi, operator, problem } from '../testing/mock-api';
+import { renderApp, setScreen } from '../testing/render-app';
 
-/** jsdom has no layout engine; the screen width is declared through matchMedia. */
-function setScreen(width: 'wide' | 'narrow') {
-  vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: width === 'wide',
-    media: query,
-    onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }));
-}
-
-function renderAt(path: string) {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ status: 'ok' })));
-  const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(
-    <Provider store={createStore()}>
-      <ThemeProvider theme={theme}>
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </Provider>,
-  );
-}
+const loggedIn = {
+  'GET /api/auth/me': () => Response.json(operator),
+  'GET /api/health': () => Response.json({ status: 'ok' }),
+};
 
 const SCREENS = ['Overview', 'Sectors', 'Machines', 'Monitoring points', 'CSV import'];
 
@@ -39,46 +14,71 @@ describe('application routes', () => {
     vi.unstubAllGlobals();
   });
 
-  it('keeps every screen in a visible menu on a wide screen', () => {
+  it('keeps every screen in a visible menu on a wide screen', async () => {
     setScreen('wide');
-    renderAt('/');
+    mockApi(loggedIn);
+    renderApp('/');
 
-    const nav = screen.getByRole('navigation', { name: 'Main navigation' });
+    const nav = await screen.findByRole('navigation', { name: 'Main navigation' });
     for (const label of SCREENS) {
       expect(nav).toHaveTextContent(label);
     }
     expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument();
   });
 
-  it('hides the menu behind a button on a narrow screen', () => {
+  it('hides the menu behind a button on a narrow screen', async () => {
     setScreen('narrow');
-    renderAt('/');
+    mockApi(loggedIn);
+    renderApp('/');
 
-    expect(screen.queryByRole('navigation', { name: 'Main navigation' })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open menu' }));
 
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
 
-  it('renders the screen of the current path', () => {
+  it('renders the screen of the current path', async () => {
     setScreen('wide');
-    renderAt('/machines');
+    mockApi(loggedIn);
+    renderApp('/machines');
 
-    expect(screen.getByRole('heading', { name: 'Machines' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Machines' })).toBeInTheDocument();
   });
 
-  it('answers an unknown path with a not found page', () => {
+  it('answers an unknown path with a not found page', async () => {
     setScreen('wide');
-    renderAt('/no-such-screen');
+    mockApi(loggedIn);
+    renderApp('/no-such-screen');
 
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
   });
 
   it('shows the API as online once the health check answers', async () => {
     setScreen('wide');
-    renderAt('/');
+    mockApi(loggedIn);
+    renderApp('/');
 
     expect(await screen.findByText('API: online')).toBeInTheDocument();
+  });
+
+  it('sends a visitor without a session to the login screen', async () => {
+    setScreen('wide');
+    mockApi({ 'GET /api/auth/me': () => problem(401, 'Authentication required.') });
+    const { router } = renderApp('/machines');
+
+    expect(await screen.findByRole('heading', { name: 'Condition Monitor' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(screen.queryByRole('navigation', { name: 'Main navigation' })).not.toBeInTheDocument();
+  });
+
+  it('shows nothing private while the API cannot be reached, and offers a retry', async () => {
+    setScreen('wide');
+    mockApi({ 'GET /api/auth/me': () => new Response('Bad Gateway', { status: 502 }) });
+    renderApp('/machines');
+
+    expect(
+      await screen.findByText('Could not reach the API to check the session.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Machines' })).not.toBeInTheDocument();
   });
 });
