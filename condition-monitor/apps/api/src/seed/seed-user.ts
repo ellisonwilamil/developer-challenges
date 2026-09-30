@@ -1,13 +1,13 @@
 import { PASSWORD_MAX_BYTES, passwordByteLength } from '@condition-monitor/shared';
 import type { PrismaClient } from '../generated/prisma/client';
-import { hashPassword, verifyPassword } from '../auth/password';
+import { hashPassword, needsRehash, verifyPassword } from '../auth/password';
 
 export interface SeedUserInput {
   email: string | undefined;
   password: string | undefined;
 }
 
-export type SeedUserResult = 'created' | 'password updated' | 'unchanged';
+export type SeedUserResult = 'created' | 'password updated' | 'rehashed' | 'unchanged';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -39,7 +39,15 @@ export async function seedUser(
     return 'created';
   }
   if (await verifyPassword(password, existing.passwordHash)) {
-    return 'unchanged';
+    if (!needsRehash(existing.passwordHash)) {
+      return 'unchanged';
+    }
+    // Same password, older work factor: redo the hash so logins get the current cost.
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash: await hashPassword(password) },
+    });
+    return 'rehashed';
   }
   await prisma.user.update({
     where: { email },

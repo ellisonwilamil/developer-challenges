@@ -1,4 +1,5 @@
-import { verifyPassword } from '../auth/password';
+import bcrypt from 'bcryptjs';
+import { BCRYPT_COST, verifyPassword } from '../auth/password';
 import { PrismaService } from '../prisma/prisma.service';
 import { resetDatabase } from '../../test/reset-database';
 import { seedUser } from './seed-user';
@@ -37,6 +38,21 @@ describe('seedUser', () => {
     expect(result).toBe('unchanged');
     expect(after).toEqual(before);
     expect(await prisma.user.count()).toBe(1);
+  });
+
+  it('redoes a hash made with an older cost, keeping the password', async () => {
+    await prisma.user.create({
+      data: {
+        email: 'operator@plant.test',
+        passwordHash: bcrypt.hashSync('correct horse battery', BCRYPT_COST + 2),
+      },
+    });
+    const input = { email: 'operator@plant.test', password: 'correct horse battery' };
+
+    expect(await seedUser(prisma, input)).toBe('rehashed');
+    expect(await seedUser(prisma, input)).toBe('unchanged');
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: input.email } });
+    expect(bcrypt.getRounds(user.passwordHash)).toBe(BCRYPT_COST);
   });
 
   it('updates the hash when the configured password changes', async () => {
