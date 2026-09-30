@@ -59,7 +59,7 @@ export function AppLayout() {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" component="span" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" component="span" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>
             Condition Monitor
           </Typography>
           <ApiStatusChip />
