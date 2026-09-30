@@ -12,7 +12,8 @@ database cannot prove those rules reject invalid data.
 
 ## Decision
 
-- **Vitest** for the web app and `libs/shared`, the native runner for Vite.
+- **Vitest** for the web app, the simulator and `libs/shared`: the native runner for
+  Vite, and the lighter choice wherever NestJS is not involved.
 - **Jest** for the API, the default for NestJS in Nx.
 - **Integration tests** for the API against a real PostgreSQL started by Docker
   Compose, dedicated to tests. They cover every database rule, asserting that the
