@@ -33,14 +33,42 @@ model User {
 /// (assumption B9). The code is unique across the system, since it prefixes machine tags
 /// (B10). A user who still owns sectors cannot be deleted: nothing cascades silently.
 model Sector {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ownerId   String   @map("owner_id") @db.Uuid
-  code      String   @unique
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId   String    @map("owner_id") @db.Uuid
+  code      String    @unique
   name      String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  machines  Machine[]
 
   @@index([ownerId])
   @@map("sectors")
+}
+
+/// Declared in alphabetical order on purpose: PostgreSQL sorts an enum by declaration
+/// order, so sorting machines by type then reads Fan before Pump.
+enum MachineType {
+  FAN
+  PUMP
+
+  @@map("machine_type")
+}
+
+/// A pump or a fan installed in a sector. Its tag, such as DRY-FAN-01, is built from the
+/// sector code, type and number and never stored (B10); the unique index on those three
+/// columns makes the tag unique. The name is free text and may repeat (B2). A sector that
+/// still has machines cannot be deleted (B9).
+model Machine {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sectorId  String      @map("sector_id") @db.Uuid
+  type      MachineType
+  number    Int
+  name      String
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sector    Sector      @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+
+  @@unique([sectorId, type, number])
+  @@map("machines")
 }
