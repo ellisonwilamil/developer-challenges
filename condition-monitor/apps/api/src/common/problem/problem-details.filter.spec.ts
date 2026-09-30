@@ -56,6 +56,37 @@ describe('ProblemDetailsFilter', () => {
     });
   });
 
+  it('keeps the status of a client error raised by Express middleware, such as 413', () => {
+    const { host, sent } = captureResponse();
+    // The shape body-parser raises for a body over its limit (http-errors).
+    const tooLarge = Object.assign(new Error('request entity too large'), {
+      status: 413,
+      expose: true,
+      limit: 2 * 1024 * 1024,
+      type: 'entity.too.large',
+    });
+
+    filter.catch(tooLarge, host);
+
+    expect(sent.status).toBe(413);
+    expect(sent.body).toEqual({
+      type: 'about:blank',
+      title: 'Payload Too Large',
+      status: 413,
+      detail: 'The request body is larger than the limit of 2 MB.',
+    });
+  });
+
+  it('hides an error with a 4xx status that is not marked safe to show', () => {
+    const log = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const { host, sent } = captureResponse();
+
+    filter.catch(Object.assign(new Error('internal detail'), { status: 400 }), host);
+
+    expect(sent.status).toBe(500);
+    log.mockRestore();
+  });
+
   it('hides the cause of an unexpected error from the client and logs it', () => {
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     const { host, sent } = captureResponse();

@@ -43,6 +43,15 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         detail: exception.message,
       };
     }
+    const clientError = asClientError(exception);
+    if (clientError) {
+      return {
+        type: GENERIC_PROBLEM_TYPE,
+        title: STATUS_CODES[clientError.status] ?? 'Error',
+        status: clientError.status,
+        detail: clientError.detail,
+      };
+    }
     this.logger.error(exception instanceof Error ? exception.stack : String(exception));
     return {
       type: GENERIC_PROBLEM_TYPE,
@@ -51,4 +60,22 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       detail: 'An unexpected error occurred.',
     };
   }
+}
+
+/**
+ * A client error raised by Express middleware before Nest sees the request, such as a
+ * body over the size limit. These follow the http-errors convention: a 4xx `status` and
+ * `expose` set when the message is safe to show. Anything else stays a hidden 500.
+ */
+function asClientError(exception: unknown): { status: number; detail: string } | null {
+  const error = exception as { status?: unknown; expose?: unknown; limit?: unknown } | null;
+  if (typeof error?.status !== 'number' || error.status < 400 || error.status > 499) return null;
+  if (error.expose !== true) return null;
+  if (error.status === HttpStatus.PAYLOAD_TOO_LARGE && typeof error.limit === 'number') {
+    return {
+      status: error.status,
+      detail: `The request body is larger than the limit of ${error.limit / 1024 / 1024} MB.`,
+    };
+  }
+  return { status: error.status, detail: (exception as Error).message };
 }
