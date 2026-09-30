@@ -11,3 +11,19 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Tables and columns are snake_case, the PostgreSQL convention, so hand-written SQL in
+// the migrations never needs quoted identifiers. Prisma keeps camelCase in the code.
+
+/// The fixed user of assumption A1, created by the seed. Every other record belongs to
+/// a user (A4). The email is stored lowercase, so one address cannot exist twice with
+/// different casing.
+model User {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("users")
+}

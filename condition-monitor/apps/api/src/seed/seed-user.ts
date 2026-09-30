@@ -1,0 +1,44 @@
+import type { PrismaClient } from '../generated/prisma/client';
+import { hashPassword, verifyPassword } from '../auth/password';
+
+export interface SeedUserInput {
+  email: string | undefined;
+  password: string | undefined;
+}
+
+export type SeedUserResult = 'created' | 'password updated' | 'unchanged';
+
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Creates the fixed user of assumption A1 from the environment. Idempotent: running it
+ * again changes nothing unless the configured password changed, and it says which case
+ * happened rather than only not failing.
+ */
+export async function seedUser(
+  prisma: PrismaClient,
+  input: SeedUserInput,
+): Promise<SeedUserResult> {
+  const email = input.email?.trim().toLowerCase();
+  const password = input.password;
+  if (!email) {
+    throw new Error('SEED_USER_EMAIL is not set. Copy .env.example to .env or set it.');
+  }
+  if (!password || password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`SEED_USER_PASSWORD must have at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (!existing) {
+    await prisma.user.create({ data: { email, passwordHash: await hashPassword(password) } });
+    return 'created';
+  }
+  if (await verifyPassword(password, existing.passwordHash)) {
+    return 'unchanged';
+  }
+  await prisma.user.update({
+    where: { email },
+    data: { passwordHash: await hashPassword(password) },
+  });
+  return 'password updated';
+}

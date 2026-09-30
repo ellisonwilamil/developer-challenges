@@ -9,6 +9,7 @@ module.exports = {
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   testMatch: ['<rootDir>/src/**/*.integration.spec.ts'],
+  globalSetup: '<rootDir>/test/integration-global-setup.ts',
   setupFiles: ['<rootDir>/test/integration-setup.ts'],
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
