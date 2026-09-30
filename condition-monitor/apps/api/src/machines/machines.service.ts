@@ -6,6 +6,7 @@ import {
   type CreateMachineRequest,
   type ListMachinesQuery,
   type Machine,
+  type MachineDetail,
   type MachineType,
   type NextNumber,
   type Page,
@@ -13,6 +14,8 @@ import {
 } from '@condition-monitor/shared';
 import { isUniqueViolation } from '../common/database/prisma-errors';
 import { conflict, notFound } from '../common/problem/problems';
+import { MonitoringPointsRepository } from '../monitoring-points/monitoring-points.repository';
+import { toMonitoringPoint } from '../monitoring-points/point-mapper';
 import { MachinesRepository, type MachineRecord, type MachineWrite } from './machines.repository';
 
 /** The tag is built on every answer, never stored (assumption B10). */
@@ -31,17 +34,25 @@ function toMachine(record: MachineRecord): Machine {
 /** Machine rules (assumptions B2, B6, B10). The database enforces them; this layer explains. */
 @Injectable()
 export class MachinesService {
-  constructor(private readonly machines: MachinesRepository) {}
+  constructor(
+    private readonly machines: MachinesRepository,
+    private readonly points: MonitoringPointsRepository,
+  ) {}
 
   async list(ownerId: string, query: ListMachinesQuery): Promise<Page<Machine>> {
     const { items, total } = await this.machines.list(ownerId, query);
     return { items: items.map(toMachine), total, page: query.page, pageSize: query.pageSize };
   }
 
-  async get(ownerId: string, id: string): Promise<Machine> {
+  /** The machine with its points, and what deleting it would remove (B6). */
+  async get(ownerId: string, id: string): Promise<MachineDetail> {
     const record = await this.machines.findOwned(ownerId, id);
     if (!record) throw notFound('Machine');
-    return toMachine(record);
+    const [points, counts] = await Promise.all([
+      this.points.listByMachine(id),
+      this.points.countsOfMachine(id),
+    ]);
+    return { ...toMachine(record), monitoringPoints: points.map(toMonitoringPoint), counts };
   }
 
   /**

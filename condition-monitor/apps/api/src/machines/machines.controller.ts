@@ -5,6 +5,7 @@ import {
   nextNumberQuerySchema,
   updateMachineSchema,
   type Machine,
+  type MachineDetail,
   type NextNumber,
   type Page,
   type SessionUser,
@@ -45,7 +46,7 @@ export class MachinesController {
   get(
     @CurrentUser() user: SessionUser,
     @Param('id', uuidParam('Machine')) id: string,
-  ): Promise<Machine> {
+  ): Promise<MachineDetail> {
     return this.machines.get(user.id, id);
   }
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { MachineType } from './machine.js';
+import type { Machine } from './machine-schemas.js';
 import {
   FAN_LOCATIONS,
   isRepeatableLocation,
@@ -127,4 +128,10 @@ export interface MonitoringPoint {
 export interface MachineCounts {
   monitoringPoints: number;
   sensors: number;
+}
+
+/** Answer of `GET /api/machines/:id`: the machine, its points and what deleting it removes. */
+export interface MachineDetail extends Machine {
+  monitoringPoints: MonitoringPoint[];
+  counts: MachineCounts;
 }

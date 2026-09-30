@@ -183,10 +183,14 @@ describe('machines over HTTP', () => {
     ]);
   });
 
-  it('reads one machine, and hides one of another user', async () => {
+  it('reads one machine with its points and counts, and hides one of another user', async () => {
     const { body: mine } = await create(operator, { sectorId: dry.id, type: 'Fan', number: 1 });
 
-    expect(await readJson<Machine>(await operator('GET', `/machines/${mine.id}`))).toEqual(mine);
+    expect(await readJson<Machine>(await operator('GET', `/machines/${mine.id}`))).toEqual({
+      ...mine,
+      monitoringPoints: [],
+      counts: { monitoringPoints: 0, sensors: 0 },
+    });
     expect((await other('GET', `/machines/${mine.id}`)).status).toBe(404);
     expect((await operator('GET', '/machines/not-a-uuid')).status).toBe(404);
   });

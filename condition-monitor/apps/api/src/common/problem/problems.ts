@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { VALIDATION_PROBLEM_TYPE } from '../validation/zod-validation.pipe';
 import { ProblemException } from './problem.exception';
 
 export const CONFLICT_PROBLEM_TYPE = 'urn:condition-monitor:error:conflict';
@@ -18,4 +19,18 @@ export function conflict(
  */
 export function notFound(resource: string): NotFoundException {
   return new NotFoundException(`${resource} not found.`);
+}
+
+/**
+ * A request that passed the schema but breaks a rule only the stored data can check, such
+ * as a position that does not belong to the machine's type. Same shape as a schema error.
+ */
+export function invalid(errors: { field: string; message: string }[]): ProblemException {
+  return new ProblemException({
+    type: VALIDATION_PROBLEM_TYPE,
+    title: 'Invalid request',
+    status: 422,
+    detail: errors.length === 1 ? '1 field is invalid.' : `${errors.length} fields are invalid.`,
+    errors,
+  });
 }
