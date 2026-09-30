@@ -8,3 +8,4 @@ export * from './lib/auth.js';
 export * from './lib/sector.js';
 export * from './lib/pagination.js';
 export * from './lib/machine-schemas.js';
+export * from './lib/point-schemas.js';
