@@ -196,7 +196,11 @@ export function MachineDetailPage() {
               {detail.monitoringPoints.map((point) => (
                 <TableRow key={point.id} hover>
                   <TableCell>{locationLabel(point.location)}</TableCell>
-                  <TableCell>{point.name}</TableCell>
+                  <TableCell>
+                    <Link component={RouterLink} to={`/monitoring-points/${point.id}`}>
+                      {point.name}
+                    </Link>
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     {point.sensor ? (
                       <>

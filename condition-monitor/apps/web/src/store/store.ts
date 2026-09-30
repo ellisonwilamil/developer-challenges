@@ -11,6 +11,7 @@ import { machineDetailSlice } from '../features/machine-detail/machine-detail-sl
 import { machinesSlice } from '../features/machines/machines-slice';
 import { monitoringPointsSlice } from '../features/monitoring-points/monitoring-points-slice';
 import { overviewSlice } from '../features/overview/overview-slice';
+import { pointDetailSlice } from '../features/point-detail/point-detail-slice';
 import { sectorsSlice } from '../features/sectors/sectors-slice';
 import {
   fetchSession,
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
   [monitoringPointsSlice.name]: monitoringPointsSlice.reducer,
   [overviewSlice.name]: overviewSlice.reducer,
   [importSlice.name]: importSlice.reducer,
+  [pointDetailSlice.name]: pointDetailSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

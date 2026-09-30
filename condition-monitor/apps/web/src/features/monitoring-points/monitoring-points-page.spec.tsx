@@ -124,17 +124,22 @@ describe('monitoring points page', () => {
     expect(rows().map((row) => row[2])).toEqual(['Inlet']);
   });
 
-  it('opens the machine of a row', async () => {
+  it('opens the point of a row, and the machine from its tag', async () => {
     mockApi({
       ...base,
       [FIRST_PAGE]: () => Response.json(page(points)),
       'GET /api/sectors': () => Response.json([]),
+      'GET /api/monitoring-points/f1': () => new Response(null, { status: 404 }),
+      'GET /api/monitoring-points/f1/time-series': () => new Response(null, { status: 404 }),
       'GET /api/machines/m-fan': () => new Response(null, { status: 404 }),
     });
     const { router } = renderApp('/monitoring-points');
 
     fireEvent.click(await screen.findByRole('cell', { name: 'Casing' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/monitoring-points/f1'));
 
+    await router.navigate('/monitoring-points');
+    fireEvent.click(await screen.findByRole('link', { name: 'DRY-FAN-01' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/machines/m-fan'));
   });
 

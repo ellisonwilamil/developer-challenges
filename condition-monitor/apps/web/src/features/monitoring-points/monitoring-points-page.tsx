@@ -32,7 +32,7 @@ const COLUMNS: { key: PointSortKey; label: string }[] = [
 /**
  * Every monitoring point of the user, 5 per page, sortable by any column in both
  * directions (challenge, section 3). Points without a sensor sort last either way (B7).
- * A row opens its machine, where its sensor is managed.
+ * A row opens the point with its time-series; the tag opens the machine.
  */
 export function MonitoringPointsPage() {
   const dispatch = useAppDispatch();
@@ -119,7 +119,7 @@ export function MonitoringPointsPage() {
                     key={point.id}
                     hover
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/machines/${point.machine.id}`)}
+                    onClick={() => navigate(`/monitoring-points/${point.id}`)}
                   >
                     <TableCell>{point.machine.name}</TableCell>
                     <TableCell>{point.machine.type}</TableCell>

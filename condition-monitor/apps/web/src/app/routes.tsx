@@ -5,6 +5,7 @@ import { MachineDetailPage } from '../features/machine-detail/machine-detail-pag
 import { MachinesPage } from '../features/machines/machines-page';
 import { MonitoringPointsPage } from '../features/monitoring-points/monitoring-points-page';
 import { OverviewPage } from '../features/overview/overview-page';
+import { PointDetailPage } from '../features/point-detail/point-detail-page';
 import { SectorsPage } from '../features/sectors/sectors-page';
 import { RequireSession } from '../features/session/require-session';
 import { AppLayout } from '../layout/app-layout';
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
             element: SCREENS[item.path],
           })),
           { path: '/machines/:id', element: <MachineDetailPage /> },
+          { path: '/monitoring-points/:id', element: <PointDetailPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
