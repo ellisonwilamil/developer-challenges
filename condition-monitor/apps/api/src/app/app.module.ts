@@ -5,9 +5,10 @@ import { ProblemDetailsFilter } from '../common/problem/problem-details.filter';
 import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { HealthController } from '../health/health.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { SectorsModule } from '../sectors/sectors.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, SectorsModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
