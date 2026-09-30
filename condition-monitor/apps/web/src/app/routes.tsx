@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import type { RouteObject } from 'react-router';
+import { ImportPage } from '../features/import/import-page';
 import { MachineDetailPage } from '../features/machine-detail/machine-detail-page';
 import { MachinesPage } from '../features/machines/machines-page';
 import { MonitoringPointsPage } from '../features/monitoring-points/monitoring-points-page';
@@ -10,14 +11,14 @@ import { AppLayout } from '../layout/app-layout';
 import { NAVIGATION } from '../layout/navigation';
 import { LoginPage } from '../pages/login-page';
 import { NotFoundPage } from '../pages/not-found-page';
-import { PlaceholderPage } from '../pages/placeholder-page';
 
-/** Screens that have landed; the others show a placeholder until their slice does. */
-const SCREENS: Partial<Record<string, ReactElement>> = {
+/** The screen of each menu entry; the type makes a missing one a compile error. */
+const SCREENS: Record<(typeof NAVIGATION)[number]['path'], ReactElement> = {
   '/': <OverviewPage />,
   '/sectors': <SectorsPage />,
   '/machines': <MachinesPage />,
   '/monitoring-points': <MonitoringPointsPage />,
+  '/import': <ImportPage />,
 };
 
 /**
@@ -34,7 +35,7 @@ export const routes: RouteObject[] = [
         children: [
           ...NAVIGATION.map((item) => ({
             path: item.path,
-            element: SCREENS[item.path] ?? <PlaceholderPage title={item.label} />,
+            element: SCREENS[item.path],
           })),
           { path: '/machines/:id', element: <MachineDetailPage /> },
           { path: '*', element: <NotFoundPage /> },

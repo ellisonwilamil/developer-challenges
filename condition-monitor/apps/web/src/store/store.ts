@@ -6,6 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import type { RequestFailure } from '../api/failure';
 import { healthSlice } from '../features/health/health-slice';
+import { importSlice } from '../features/import/import-slice';
 import { machineDetailSlice } from '../features/machine-detail/machine-detail-slice';
 import { machinesSlice } from '../features/machines/machines-slice';
 import { monitoringPointsSlice } from '../features/monitoring-points/monitoring-points-slice';
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   [machineDetailSlice.name]: machineDetailSlice.reducer,
   [monitoringPointsSlice.name]: monitoringPointsSlice.reducer,
   [overviewSlice.name]: overviewSlice.reducer,
+  [importSlice.name]: importSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

@@ -1,13 +1,14 @@
 import { Controller, HttpCode, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { IngestionReport, SessionUser } from '@condition-monitor/shared';
+import {
+  MAX_UPLOAD_BYTES,
+  type IngestionReport,
+  type SessionUser,
+} from '@condition-monitor/shared';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { fileRejected, importRejected } from '../common/problem/problems';
 import { csvField, readCsv } from './csv-readings';
 import { IngestionService } from './ingestion.service';
-
-/** Uploads above this answer 413 before the file is read. */
-export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 /**
  * A CSV file of readings uploaded from the interface (C3, C11, C12). It is stored

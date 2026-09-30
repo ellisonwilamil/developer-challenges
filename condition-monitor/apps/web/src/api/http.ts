@@ -64,15 +64,21 @@ export function deleteJson(path: string): Promise<void> {
   return request<void>('DELETE', path);
 }
 
+/** A multipart form, such as a file upload; the browser writes its content type. */
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  return request<T>('POST', path, form);
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const json = body !== undefined && !(body instanceof FormData);
   const response = await fetch(`/api${path}`, {
     method,
     credentials: 'same-origin',
     headers: {
       Accept: 'application/json',
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...(json ? { 'Content-Type': 'application/json' } : {}),
     },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(body === undefined ? {} : { body: json ? JSON.stringify(body) : (body as FormData) }),
   });
   if (!response.ok) {
     throw new ApiError(response.status, await readProblem(response));

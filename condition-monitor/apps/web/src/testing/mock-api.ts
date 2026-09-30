@@ -9,7 +9,13 @@ export function mockApi(routes: MockRoutes) {
   const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const method = init?.method ?? 'GET';
     const path = String(input);
-    calls.push({ method, path, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+    const body = init?.body;
+    calls.push({
+      method,
+      path,
+      // A form is kept as sent, so a test can read the file in it.
+      body: body instanceof FormData ? body : body ? JSON.parse(String(body)) : undefined,
+    });
     const answer = routes[`${method} ${path}`];
     if (!answer) {
       throw new Error(`Unexpected request in test: ${method} ${path}`);

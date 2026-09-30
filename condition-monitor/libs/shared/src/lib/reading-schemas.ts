@@ -5,6 +5,9 @@ import { serialNumberSchema } from './point-schemas.js';
 /** Readings accepted in one submission, JSON or CSV (assumption C8). */
 export const MAX_READINGS_PER_SUBMISSION = 10_000;
 
+/** Size of a CSV upload; the API answers 413 above it, the interface checks it first. */
+export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+
 /** Readings a single series may hold, about one year at a 10-minute interval (C8). */
 export const MAX_READINGS_PER_SERIES = 50_000;
 
