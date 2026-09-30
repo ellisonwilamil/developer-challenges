@@ -53,7 +53,8 @@ with an `errors` list that points at what failed:
 }
 ```
 
-A CSV error names the line (the header is line 1); a JSON reading names its index:
+A CSV error names the line (the header is line 1) and the CSV column; a JSON reading
+names its index and its JSON field:
 
 ```json
 {
@@ -62,12 +63,18 @@ A CSV error names the line (the header is line 1); a JSON reading names its inde
   "status": 422,
   "detail": "3 lines are invalid. Nothing was stored.",
   "errors": [
-    { "line": 4, "field": "timestamp", "message": "Missing offset: 2026-09-29T10:00:00." },
-    { "line": 9, "field": "serial_number", "message": "Unknown serial number: DX-009999." },
+    { "line": 4, "field": "timestamp", "message": "Must be ISO 8601 with an offset, such as 2026-09-29T10:00:00Z." },
+    { "line": 9, "field": "serial_number", "message": "No installed sensor with serial number DX-009999." },
     { "line": 12, "field": "value", "message": "Conflicts with the stored value 2.31 at the same timestamp." }
   ]
 }
 ```
+
+The detail counts invalid readings or lines, not messages. At most 100 errors are
+listed; when there are more, the detail says so, and the count still covers them all.
+A file refused as a whole, before any line is judged, has one error on the field
+`file` and no line: not UTF-8, semicolons as separator, a header with a missing,
+repeated or unknown column, no readings, or more than 10,000.
 
 A conflict lists the records involved:
 
@@ -298,10 +305,15 @@ A time-series:
 
 | Route | Request | Success | Errors |
 |---|---|---|---|
-| `GET /api/monitoring-points/:id/time-series` | none | `200`, the series of the point | `404` |
+| `GET /api/monitoring-points/:id/time-series` | none | `200`, the series of the point, by quantity then axis | `404` |
 | `GET /api/time-series/:id/metrics` | query `from?`, `to?` | `200`, metrics | `404`, `422` |
 | `GET /api/time-series/:id/readings` | query `from?`, `to?`, `maxPoints?` | `200`, readings or buckets | `404`, `422` |
 | `DELETE /api/time-series/:id` | none | `204`, the series and its readings | `404` |
+
+An interval includes both ends, and either end may be left out: without `from` it
+starts at the first reading, without `to` it ends at the last. `to` before `from`
+answers `422`. Timestamps in answers are UTC with milliseconds, such as
+`2026-09-29T10:00:00.000Z`.
 
 **Metrics** (C6, C7), over the whole series or the given interval:
 
@@ -313,7 +325,7 @@ A time-series:
 ```
 
 `stdDev` is the population standard deviation. With no readings, `count` is `0` and
-every other field is `null`.
+every other field is `null`; a single reading has a `stdDev` of `0`, which was measured.
 
 **Readings.** Without `maxPoints`, the answer is every reading in the interval, and
 without an interval, the full series:
@@ -334,6 +346,11 @@ needs to see:
 }
 ```
 
+The buckets have equal widths and span the requested interval, or the first and last
+readings where an end is left out. A bucket holds the readings from its `start` up to,
+not including, its `end`; the last one also holds a reading at its `end`. A bucket
+without readings is left out, so a gap in the data stays a gap.
+
 ## Readings input
 
 Two entry points, one validation (C3). Both are all or nothing (C4), accept up to
@@ -342,8 +359,21 @@ Two entry points, one validation (C3). Both are all or nothing (C4), accept up t
 
 | Route | Request | Success | Errors |
 |---|---|---|---|
-| `POST /api/imports` | `multipart/form-data`, field `file`, a CSV as in C11 and C12 | `200`, report | `413` file over 2 MB, `422` with errors by line |
-| `POST /api/readings` | `{ readings: [{ serialNumber, timestamp, quantity, axis, value }] }` | `200`, report | `422` with errors by index |
+| `POST /api/imports` | `multipart/form-data`, field `file`, a CSV as in C11 and C12 | `200`, report | `400` file sent in another field, `413` file over 2 MB, `422` with errors by line |
+| `POST /api/readings` | `{ readings: [{ serialNumber, timestamp, quantity, axis, value }] }` | `200`, report | `413` body over 2 MB, `422` with errors by index |
+
+Rules of every reading, whatever the entry point:
+
+- `serialNumber` is trimmed and uppercased, and must be a sensor installed at a point
+  of the user. An unknown serial number, a removed sensor and another user's sensor get
+  the same answer (A4).
+- `timestamp` is ISO 8601 with an offset, at most to the millisecond: finer precision
+  would be lost in storage and could merge two readings.
+- `axis` is `H`, `V` or `A` for vibration and `null` (an empty CSV cell) for
+  temperature.
+- `value` is a finite number; in CSV, a plain decimal with a dot.
+- The same series and instant twice in one submission count as one reading and one
+  repeat; with two values, the second is refused naming the first.
 
 The report, per sensor (C11):
 

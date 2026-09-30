@@ -22,10 +22,9 @@ tests and screen:
 | Sectors | done: list, create, edit and delete, with the `DRY` sector seeded |
 | Machines | done: paginated, sortable list, tag built from sector, type and number |
 | Monitoring points and sensors | done: positions per machine type, one sensor per point, pump rule, the paginated list sortable by every column |
-| Time-series | next |
-| Simulator | planned |
-
-Until its slice lands, a screen shows a placeholder.
+| Time-series | done: readings from CSV or JSON, metrics, full retrieval, deletion, the count on the overview, charts per monitoring point |
+| Simulator | next |
+| Latency measurement | planned |
 
 ## Stack
 
@@ -105,6 +104,20 @@ docker compose down -v
 docker compose up -d
 ```
 
+### Try it with readings
+
+The seed creates only the user and the `DRY` sector. To see a chart:
+
+1. In **Machines**, add a machine, open it and add its positions.
+2. Install a sensor with serial number `DX-000001` at one of them: `HF+` on a pump, any
+   model on a fan.
+3. In **CSV import**, download the example file and import it: one day of the seven
+   series of that sensor, with synthetic values.
+4. In **Monitoring points**, open the point: one chart per quantity, and the metrics of
+   each series.
+
+Importing the same file again stores nothing new and says so.
+
 ### Simulator
 
 ```bash
@@ -112,7 +125,7 @@ npm run simulate -- help
 ```
 
 It parses its commands and options already; generating telemetry arrives with the
-time-series slice, and until then `backfill` and `live` exit with an error saying so.
+simulator slice, and until then `backfill` and `live` exit with an error saying so.
 
 ## Assumptions
 
@@ -165,8 +178,9 @@ which is why the file lives there.
 
 ### Dependency audit
 
-`npm audit` reports advisories in six packages, all third-party and none in this
-project's code. Measured on 2026-09-30 with `npm audit` after `npm ci`:
+`npm audit` reports advisories in seven packages, all third-party and none in this
+project's code. Measured on 2026-09-30 with `npm audit` after `npm ci`, and again after
+the chart libraries were added, which brought no advisory of their own:
 
 | Package | Pulled in by | Why this project is not exposed |
 |---|---|---|
@@ -176,6 +190,7 @@ project's code. Measured on 2026-09-30 with `npm audit` after `npm ci`:
 | `smol-toml` | Nx | parses TOML files, and the project has none |
 | `uuid` | `webpack-dev-server` | development server the API does not use; the advisory covers v3, v5 and v6 with a buffer, not the v4 it calls |
 | `esbuild` | Vite, simulator build | affects esbuild's own development server on Windows, which is not used |
+| `axios` | Nx | loaded only for Nx Cloud, `nx release` and Nx's setup prompts; this workspace uses none of them |
 
 `npm audit --omit=dev` still lists the Prisma CLI, because `@prisma/client` declares it
 as a peer dependency and npm then counts it as a production package. The built API

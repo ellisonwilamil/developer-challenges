@@ -71,7 +71,7 @@ erDiagram
     }
     Reading {
         uuid seriesId PK,FK
-        timestamptz timestamp PK
+        timestamptz timestamp PK "milliseconds"
         float8 value "finite"
     }
 ```

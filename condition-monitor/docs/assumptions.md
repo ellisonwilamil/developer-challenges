@@ -154,12 +154,18 @@ the simulator. Both carry the same content and go through the same validation.
 
 **C4. Invalid readings.** A submission with any invalid reading is rejected as a whole
 with `422`, stating the line and the reason of each invalid reading. Partial acceptance
-would hide the loss.
+would hide the loss. At most 100 errors are listed in one answer, a size a person can
+read; the answer still counts every invalid reading, so none goes unmentioned.
 
 **C5. Repeated readings.** A timestamp is unique within a series, enforced by the
 database. A reading sent again with the same value is ignored and counted in the
 report. The same timestamp with a different value is a conflict and rejects the
-submission: overwriting would change stored data without anyone noticing.
+submission: overwriting would change stored data without anyone noticing. The same
+applies inside one submission: a reading repeated in it is counted once and reported
+as repeated, and two values for one instant are refused.
+The stored value is compared after the insert, in the same transaction: comparing
+before would leave a moment where a concurrent submission could store another value
+that the insert then skips without noticing.
 
 **C6. Metrics.** Count, minimum, maximum, mean, standard deviation, RMS, and first and
 last timestamps, computed in the database. RMS is the metric that matters for
@@ -210,7 +216,13 @@ ignored.
 in any order. Comma as separator and dot as decimal mark; a file saved with semicolons
 and decimal commas, as spreadsheet software does in Portuguese locales, is rejected
 with a message saying so rather than producing wrong values. Timestamps are ISO 8601
-with an explicit offset; a time without one is ambiguous.
+with an explicit offset; a time without one is ambiguous. They keep milliseconds, the
+precision of the database and of JavaScript dates; a finer one is refused, since two
+readings a microsecond apart would silently become one.
+A column the header does not recognize is refused rather than ignored: ignoring it
+would drop its data without a word. A byte-order mark, which spreadsheets write at the
+start of a UTF-8 file, is accepted; text in another encoding is refused, since its
+accented letters would be stored corrupted.
 
 **C13. Simulator.** A separate command-line application generates telemetry for the
 installed sensors, discovered through the API or restricted to given serial numbers.
@@ -237,7 +249,19 @@ passes.
 screen, beside the counts of sectors, machines, points, sensors and readings.
 
 **E2. CSV import.** An upload is stored directly, with no preview step. The
-all-or-nothing rule of C4 already guarantees that nothing is stored halfway.
+all-or-nothing rule of C4 already guarantees that nothing is stored halfway. The
+screen offers an example file: one day of the seven series of sensor `DX-000001`, with
+synthetic values (a daily cycle plus fixed pseudo-random noise), not measurements.
+
+**E3. Chart period.** The monitoring point screen offers the last 24 hours, 7 days, 30
+days, or all readings. A period ends at the point's latest reading, not at the current
+time: readings imported from last month would otherwise show an empty chart.
+
+**E4. Condensed charts.** Above 1,000 readings in a series, the chart receives buckets
+of minimum and maximum (ADR 0009) and draws each as a vertical stroke, so peaks stay
+visible; the screen says when a chart is condensed. Where readings stop for much longer
+than usual, the line is broken instead of bridged, so a gap in the data is seen as a
+gap. A metric without readings is shown as "n/a", never as zero (C7).
 
 ## F. Out of scope for now
 
