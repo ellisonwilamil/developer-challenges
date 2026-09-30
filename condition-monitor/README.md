@@ -13,9 +13,19 @@ challenge ([full-stack-challenge.md](../full-stack-challenge.md)).
 
 The workspace runs end to end: the web app reaches the API through its dev server, the
 API reaches PostgreSQL through Prisma, and CI checks every project on each push. The
-features arrive next, one vertical slice at a time (authentication, sectors, machines,
-monitoring points and sensors, time-series, simulator), each with its migration, API
-routes, tests and screen. Until its slice lands, a screen shows a placeholder.
+features arrive one vertical slice at a time, each with its migration, API routes,
+tests and screen:
+
+| Slice | State |
+|---|---|
+| Authentication | done: login, logout, session cookie, every route private by default |
+| Sectors | next |
+| Machines | planned |
+| Monitoring points and sensors | planned |
+| Time-series | planned |
+| Simulator | planned |
+
+Until its slice lands, a screen shows a placeholder.
 
 ## Stack
 
@@ -56,6 +66,7 @@ npm ci
 cp .env.example .env
 docker compose up -d
 npm run db:deploy
+npm run db:seed
 npm run dev
 ```
 
@@ -63,13 +74,25 @@ npm run dev
 - `.env.example` holds development-only values; the defaults work as they are.
 - `docker compose up -d` starts PostgreSQL 16 with two databases: `condition_monitor`
   for the application and `condition_monitor_test` for integration tests.
-- `npm run db:deploy` applies the database migrations. The tables arrive with the
-  feature slices, so for now it reports that there is nothing to apply.
-- `npm run dev` serves the API and the web app together.
+- `npm run db:deploy` applies the database migrations.
+- `npm run db:seed` creates the fixed user from `SEED_USER_EMAIL` and
+  `SEED_USER_PASSWORD` in `.env`. It is idempotent: run again, it reports `unchanged`.
+- `npm run dev` serves the API and the web app together. The API refuses to start
+  without a `JWT_SECRET` of at least 32 characters, which `.env.example` provides.
 
-Then open **http://localhost:4200**. The chip in the top bar reads "API: online" when
-the web app reaches the API. The API alone answers at
+Then open **http://localhost:4200** and log in with the development credentials from
+`.env.example` (assumption A1):
+
+| Email | Password |
+|---|---|
+| `operator@condition-monitor.test` | `Monitor-2026-dev` |
+
+These are local development values only. The chip in the top bar reads "API: online"
+when the web app reaches the API, which alone answers at
 `http://localhost:3000/api/health`.
+
+An `.env` copied before a slice added new variables lacks them: compare it with
+`.env.example`, or copy it again.
 
 The container restarts on its own after a reboot, unless it was stopped with
 `docker compose stop`. The data is kept in the volume.
