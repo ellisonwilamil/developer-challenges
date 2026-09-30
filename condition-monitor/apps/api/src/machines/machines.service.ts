@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
   buildMachineTag,
+  isLocationAllowed,
+  isSensorModelAllowed,
   MACHINE_NUMBER_MAX,
   machineTypeMapping,
+  sensorModelMapping,
   type CreateMachineRequest,
   type ListMachinesQuery,
   type Machine,
@@ -12,10 +15,10 @@ import {
   type Page,
   type UpdateMachineRequest,
 } from '@condition-monitor/shared';
-import { isUniqueViolation } from '../common/database/prisma-errors';
+import { isUniqueViolation, violatedCheck } from '../common/database/prisma-errors';
 import { conflict, notFound } from '../common/problem/problems';
 import { MonitoringPointsRepository } from '../monitoring-points/monitoring-points.repository';
-import { toMonitoringPoint } from '../monitoring-points/point-mapper';
+import { toMonitoringPoint, type PointRow } from '../monitoring-points/point-mapper';
 import { MachinesRepository, type MachineRecord, type MachineWrite } from './machines.repository';
 
 /** The tag is built on every answer, never stored (assumption B10). */
@@ -93,8 +96,12 @@ export class MachinesService {
       : current.sector;
     if (!sector) throw notFound('Sector');
 
-    const type = body.type ?? machineTypeMapping.fromDb(current.type);
+    const currentType = machineTypeMapping.fromDb(current.type);
+    const type = body.type ?? currentType;
     const number = body.number ?? current.number;
+    if (type !== currentType) {
+      await this.refuseInvalidPoints(id, currentType, type);
+    }
     const changes: Partial<MachineWrite> = {
       ...(body.sectorId ? { sectorId: body.sectorId } : {}),
       ...(body.type ? { type: machineTypeMapping.toDb(body.type) } : {}),
@@ -104,8 +111,55 @@ export class MachinesService {
     try {
       return toMachine(await this.machines.update(id, changes));
     } catch (error) {
+      // A point changed between the check above and the write: the cascade reached a
+      // CHECK in the database, which refused the whole change.
+      const check = violatedCheck(error);
+      if (
+        check === 'monitoring_points_location_type_check' ||
+        check === 'sensors_pump_model_check'
+      ) {
+        throw conflict(
+          'Machine type cannot change',
+          'Its monitoring points changed meanwhile. Reload the machine and retry.',
+          [],
+        );
+      }
       throw this.translate(error, buildMachineTag(sector.code, type, number));
     }
+  }
+
+  /**
+   * A type change must leave every point valid (B5): no position of the old type, and no
+   * TcAg or TcAs sensor on a pump. All offending points are listed at once, so the user
+   * sees everything to fix; the database cascade refuses the change anyway.
+   */
+  private async refuseInvalidPoints(
+    machineId: string,
+    from: MachineType,
+    to: MachineType,
+  ): Promise<void> {
+    const reasons = (point: PointRow): string[] => {
+      const found: string[] = [];
+      if (!isLocationAllowed(to, point.location)) {
+        found.push(`Position ${point.location} belongs to ${from}.`);
+      }
+      if (point.sensorModel) {
+        const model = sensorModelMapping.fromDb(point.sensorModel);
+        if (!isSensorModelAllowed(to, model))
+          found.push(`Sensor model ${model} is not allowed on ${to}.`);
+      }
+      return found;
+    };
+    const errors = (await this.points.listByMachine(machineId)).flatMap((point) =>
+      reasons(point).map((reason) => ({ monitoringPointId: point.id, name: point.name, reason })),
+    );
+    if (errors.length === 0) return;
+    const invalidPoints = new Set(errors.map((error) => error.monitoringPointId)).size;
+    throw conflict(
+      'Machine type cannot change',
+      `${invalidPoints} monitoring ${invalidPoints === 1 ? 'point is' : 'points are'} not valid for ${to}.`,
+      errors,
+    );
   }
 
   /** Deletion cascades to what the machine owns, once those exist (B6). */

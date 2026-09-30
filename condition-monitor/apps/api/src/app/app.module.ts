@@ -8,9 +8,17 @@ import { MachinesModule } from '../machines/machines.module';
 import { MonitoringPointsModule } from '../monitoring-points/monitoring-points.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SectorsModule } from '../sectors/sectors.module';
+import { SensorsModule } from '../sensors/sensors.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, SectorsModule, MachinesModule, MonitoringPointsModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    SectorsModule,
+    MachinesModule,
+    MonitoringPointsModule,
+    SensorsModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
