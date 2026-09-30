@@ -82,8 +82,11 @@ single fixed user (A1) this cannot happen; supporting several users would mean m
 codes and tags unique per user instead.
 
 **B10. Machine tag.** A machine is identified in the plant by a tag built from its
-sector, type and number, such as `DRY-FAN-01`, unique across the system. The system
-suggests the next free number for the sector and type, and the user can change it.
+sector, type and number, such as `DRY-FAN-01`, unique across the system. The number
+goes from 1 to 999. The system suggests one above the highest number of that type in
+the sector, not the first gap: in a plant a retired equipment number is not reused,
+since documents and history still refer to it. The user can still type any free
+number.
 Changing the sector or the number rebuilds the tag. The tag is never typed as free
 text, so it cannot disagree with the machine's actual sector. The free-text machine
 name required by the challenge stays alongside it.

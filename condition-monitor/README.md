@@ -20,8 +20,8 @@ tests and screen:
 |---|---|
 | Authentication | done: login, logout, session cookie, every route private by default |
 | Sectors | done: list, create, edit and delete, with the `DRY` sector seeded |
-| Machines | next |
-| Monitoring points and sensors | planned |
+| Machines | done: paginated, sortable list, tag built from sector, type and number |
+| Monitoring points and sensors | next |
 | Time-series | planned |
 | Simulator | planned |
 

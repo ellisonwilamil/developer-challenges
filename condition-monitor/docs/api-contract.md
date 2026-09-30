@@ -98,7 +98,9 @@ Paginated lists take `page` (from 1), `pageSize`, `sort` and `order` (`asc` or
 ```
 
 `sort` accepts only the keys listed for each route. The primary key is always the
-last sort key, so items never skip or repeat between pages (B8).
+last sort key, so items never skip or repeat between pages (B8). A page past the last
+answers `200` with no items and the real `total`: the item that filled it may have
+just been deleted.
 
 ## Health
 
@@ -123,16 +125,16 @@ is up. Docker, CI and the web app use it to know the API is reachable.
 
 ## Sectors
 
-A sector: `{ id, code, name }`. The code is trimmed and uppercased, then must be 2 to 10
-letters or digits, so `dry` is stored as `DRY`. The name is trimmed and 1 to 100
-characters long. The number of machines per sector joins this shape with the machines.
+A sector: `{ id, code, name, machineCount }`. The code is trimmed and uppercased, then
+must be 2 to 10 letters or digits, so `dry` is stored as `DRY`. The name is trimmed and 1
+to 100 characters long.
 
 | Route | Request | Success | Errors |
 |---|---|---|---|
 | `GET /api/sectors` | none | `200`, all sectors, sorted by code, then id | |
 | `POST /api/sectors` | `{ code, name }` | `201`, the sector | `409` code in use, `422` |
 | `PATCH /api/sectors/:id` | `{ code?, name? }`, at least one | `200`, the sector | `404`, `409` code in use, `422`, also for an empty body |
-| `DELETE /api/sectors/:id` | none | `204` | `404`, `409` the sector has machines, with their count (B9) |
+| `DELETE /api/sectors/:id` | none | `204` | `404`, `409` the sector has machines, with `errors: [{ machineCount }]` (B9) |
 
 The sector list is not paginated: a plant has few sectors.
 
@@ -147,27 +149,34 @@ A machine:
   "name": "Hood exhaust fan, tending side",
   "type": "Fan",
   "number": 1,
-  "sector": { "id": "…", "code": "DRY", "name": "Drying" },
-  "monitoringPointCount": 4,
-  "sensorCount": 3
+  "sector": { "id": "…", "code": "DRY", "name": "Drying" }
 }
 ```
 
 | Route | Request | Success | Errors |
 |---|---|---|---|
 | `GET /api/machines` | query `sectorId?`, pagination | `200`, page of machines | `422` |
-| `GET /api/machines/next-number` | query `sectorId`, `type` | `200 { number, tag }` | `404` sector, `422` |
-| `POST /api/machines` | `{ sectorId, type, number, name }` | `201`, the machine | `404` sector, `409` tag in use, `422` |
-| `GET /api/machines/:id` | none | `200`, the machine with its monitoring points and `counts` | `404` |
+| `GET /api/machines/next-number` | query `sectorId`, `type` | `200 { number, tag }` | `404` sector, `409` numbers already reach 999, `422` |
+| `POST /api/machines` | `{ sectorId, type, number, name }` | `201`, the machine | `404` sector, `409` tag in use, on the `number` field, `422` |
+| `GET /api/machines/:id` | none | `200`, the machine | `404` |
 | `PATCH /api/machines/:id` | `{ name?, type?, sectorId?, number? }` | `200`, the machine | `404`, `409` tag in use, `409` type change invalidates points (B5), `422` |
 | `DELETE /api/machines/:id` | none | `204`, cascades to points, sensors, series and readings (B6) | `404` |
 
-List: `pageSize` defaults to 10, at most 100; `sort` is one of `tag` (default),
-`name`, `type`, `sector`.
+The type is `Pump` or `Fan`, the number 1 to 999 and the name free text of 1 to 100
+characters that may repeat (B2); the tag is built on every answer, never stored (B10).
 
-`GET /api/machines/:id` adds `monitoringPoints` (each as in the monitoring point list)
-and `counts: { monitoringPoints, sensors, timeSeries, readings }`, which the deletion
-dialog shows before confirming.
+List: `pageSize` defaults to 10, at most 100. `sort` is one of:
+
+| Key | Order |
+|---|---|
+| `tag` (default) | sector code, type, number, as the tag reads |
+| `name` | name, then tag |
+| `type` | type alphabetically, Fan before Pump, then sector code and number |
+| `sector` | sector name, then tag |
+
+`next-number` suggests one above the highest number of that type in the sector, so a
+retired number is not reused (B10). The monitoring points of a machine, and the
+counts shown before deleting it, join the detail answer with the points.
 
 ## Monitoring points
 
