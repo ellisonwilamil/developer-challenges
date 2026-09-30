@@ -1,0 +1,73 @@
+# Continuous integration of the condition-monitor project. GitHub only reads workflows
+# from the repository root, so this file lives here while the project lives in its folder.
+name: condition-monitor
+
+on:
+  push:
+    paths:
+      - 'condition-monitor/**'
+      - '.github/workflows/condition-monitor.yml'
+  pull_request:
+    paths:
+      - 'condition-monitor/**'
+      - '.github/workflows/condition-monitor.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: condition-monitor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: condition-monitor
+
+    # Integration tests need a real PostgreSQL (ADR 0010). CI only needs the test
+    # database, so the service creates it directly.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: condition_monitor
+          POSTGRES_PASSWORD: condition_monitor
+          POSTGRES_DB: condition_monitor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U condition_monitor -d condition_monitor_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://condition_monitor:condition_monitor@localhost:5432/condition_monitor_test
+      DATABASE_URL_TEST: postgresql://condition_monitor:condition_monitor@localhost:5432/condition_monitor_test
+      NX_NO_CLOUD: 'true'
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: condition-monitor/.nvmrc
+          cache: npm
+          cache-dependency-path: condition-monitor/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      # Every project on every run: affected-only runs need a main branch with CI
+      # history to compare against, and this branch has none.
+      - name: Lint, test, type-check and build
+        run: npx nx run-many -t lint test typecheck build
+
+      - name: Integration tests
+        run: npx nx run-many -t test-integration
