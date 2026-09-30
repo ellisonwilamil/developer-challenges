@@ -69,6 +69,13 @@ machines is rejected with `409`, stating how many: a machine owns its points and
 readings, but a sector does not own its machines, and wiping them in one click would be
 too destructive.
 
+A code typed in lowercase is uppercased (`dry` becomes `DRY`): its meaning is
+unambiguous, and retyping it would only add friction. Because the code is unique across
+the system (B10), a second user creating a code another user already has would get a
+`409`, which reveals that the code exists elsewhere, against the spirit of A4. With a
+single fixed user (A1) this cannot happen; supporting several users would mean making
+codes and tags unique per user instead.
+
 **B10. Machine tag.** A machine is identified in the plant by a tag built from its
 sector, type and number, such as `DRY-FAN-01`, unique across the system. The system
 suggests the next free number for the sector and type, and the user can change it.

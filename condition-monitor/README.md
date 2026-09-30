@@ -19,8 +19,8 @@ tests and screen:
 | Slice | State |
 |---|---|
 | Authentication | done: login, logout, session cookie, every route private by default |
-| Sectors | next |
-| Machines | planned |
+| Sectors | done: list, create, edit and delete, with the `DRY` sector seeded |
+| Machines | next |
 | Monitoring points and sensors | planned |
 | Time-series | planned |
 | Simulator | planned |

@@ -88,6 +88,9 @@ for no answer.
 | Rule | How the database enforces it | Assumption |
 |---|---|---|
 | Sector code unique across the system | unique index on `Sector.code` | B9, B10 |
+| Sector code is 2 to 10 uppercase letters or digits | `CHECK` on `sectors.code` | B9 |
+| Sector name is 1 to 100 characters, trimmed | `CHECK` on `sectors.name` | B9 |
+| A user who owns sectors cannot be deleted | `ON DELETE RESTRICT` from `Sector` to `User` | A4 |
 | Machine tag unique across the system | unique index on `(sectorId, type, number)` | B10 |
 | Machine number positive | `CHECK (number >= 1)` | B10 |
 | Machine name unique per owner | unique index on `(ownerId, name)` | B2 |

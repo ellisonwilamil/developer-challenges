@@ -12,7 +12,8 @@ item are in [assumptions.md](assumptions.md).
   `POST /api/auth/login` and `GET /api/health`. Without a valid cookie the answer is
   `401`.
 - **Format:** JSON, except the CSV upload (`multipart/form-data`).
-- **Identifiers:** UUIDs.
+- **Identifiers:** UUIDs. A route id that is not a UUID answers `404` before any query, like
+  an id that does not exist.
 - **Timestamps:** ISO 8601 with an explicit offset, such as `2026-09-29T10:00:00Z`.
   Responses always use UTC.
 - **Values:** machine type `Pump` or `Fan`; sensor model `TcAg`, `TcAs` or `HF+`;
@@ -122,14 +123,15 @@ is up. Docker, CI and the web app use it to know the API is reachable.
 
 ## Sectors
 
-A sector: `{ id, code, name, machineCount }`. The code is 2 to 10 uppercase letters or
-digits.
+A sector: `{ id, code, name }`. The code is trimmed and uppercased, then must be 2 to 10
+letters or digits, so `dry` is stored as `DRY`. The name is trimmed and 1 to 100
+characters long. The number of machines per sector joins this shape with the machines.
 
 | Route | Request | Success | Errors |
 |---|---|---|---|
-| `GET /api/sectors` | none | `200`, all sectors, sorted by code | |
+| `GET /api/sectors` | none | `200`, all sectors, sorted by code, then id | |
 | `POST /api/sectors` | `{ code, name }` | `201`, the sector | `409` code in use, `422` |
-| `PATCH /api/sectors/:id` | `{ code?, name? }` | `200`, the sector | `404`, `409` code in use, `422` |
+| `PATCH /api/sectors/:id` | `{ code?, name? }`, at least one | `200`, the sector | `404`, `409` code in use, `422`, also for an empty body |
 | `DELETE /api/sectors/:id` | none | `204` | `404`, `409` the sector has machines, with their count (B9) |
 
 The sector list is not paginated: a plant has few sectors.
