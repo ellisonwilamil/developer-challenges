@@ -4,6 +4,9 @@
 services:
   postgres:
     image: postgres:16-alpine
+    # Comes back after a reboot or a Docker restart; `docker compose stop` still stops it
+    # for good, until the next `docker compose up`.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-condition_monitor}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-condition_monitor}

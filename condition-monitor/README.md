@@ -71,8 +71,8 @@ Then open **http://localhost:4200**. The chip in the top bar reads "API: online"
 the web app reaches the API. The API alone answers at
 `http://localhost:3000/api/health`.
 
-The container does not restart on its own: after a reboot, run `docker compose up -d`
-again. The data is kept in the volume.
+The container restarts on its own after a reboot, unless it was stopped with
+`docker compose stop`. The data is kept in the volume.
 
 The test database is created only when the data volume is first created. If the volume
 already existed from an earlier run, recreate it, which erases its data:
