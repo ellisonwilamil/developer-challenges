@@ -39,9 +39,9 @@ describe('application routes', () => {
   it('renders the screen of the current path', async () => {
     setScreen('wide');
     mockApi(loggedIn);
-    renderApp('/machines');
+    renderApp('/import');
 
-    expect(await screen.findByRole('heading', { name: 'Machines' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'CSV import' })).toBeInTheDocument();
   });
 
   it('answers an unknown path with a not found page', async () => {
@@ -63,7 +63,7 @@ describe('application routes', () => {
   it('sends a visitor without a session to the login screen', async () => {
     setScreen('wide');
     mockApi({ 'GET /api/auth/me': () => problem(401, 'Authentication required.') });
-    const { router } = renderApp('/machines');
+    const { router } = renderApp('/import');
 
     expect(await screen.findByRole('heading', { name: 'Condition Monitor' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
@@ -73,12 +73,12 @@ describe('application routes', () => {
   it('shows nothing private while the API cannot be reached, and offers a retry', async () => {
     setScreen('wide');
     mockApi({ 'GET /api/auth/me': () => new Response('Bad Gateway', { status: 502 }) });
-    renderApp('/machines');
+    renderApp('/import');
 
     expect(
       await screen.findByText('Could not reach the API to check the session.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Machines' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'CSV import' })).not.toBeInTheDocument();
   });
 });

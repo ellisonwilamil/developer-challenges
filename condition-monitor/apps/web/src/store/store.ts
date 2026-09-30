@@ -6,6 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import type { RequestFailure } from '../api/failure';
 import { healthSlice } from '../features/health/health-slice';
+import { machinesSlice } from '../features/machines/machines-slice';
 import { sectorsSlice } from '../features/sectors/sectors-slice';
 import {
   fetchSession,
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   [healthSlice.name]: healthSlice.reducer,
   [sessionSlice.name]: sessionSlice.reducer,
   [sectorsSlice.name]: sectorsSlice.reducer,
+  [machinesSlice.name]: machinesSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

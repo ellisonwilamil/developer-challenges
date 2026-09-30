@@ -62,13 +62,13 @@ describe('login', () => {
       },
       'GET /api/health': () => Response.json({ status: 'ok' }),
     });
-    const { router } = renderApp('/machines');
+    const { router } = renderApp('/import');
     await screen.findByRole('button', { name: 'Sign in' });
 
     fillAndSubmit('  Operator@Plant.TEST ', 'correct horse battery');
 
-    expect(await screen.findByRole('heading', { name: 'Machines' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/machines');
+    expect(await screen.findByRole('heading', { name: 'CSV import' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/import');
     expect(calls.find((call) => call.method === 'POST')?.body).toEqual({
       email: 'operator@plant.test',
       password: 'correct horse battery',

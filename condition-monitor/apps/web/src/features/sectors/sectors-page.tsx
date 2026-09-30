@@ -92,6 +92,7 @@ export function SectorsPage() {
               <TableRow>
                 <TableCell>Code</TableCell>
                 <TableCell>Name</TableCell>
+                <TableCell align="right">Machines</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -100,6 +101,7 @@ export function SectorsPage() {
                 <TableRow key={sector.id} hover>
                   <TableCell sx={{ fontWeight: 500 }}>{sector.code}</TableCell>
                   <TableCell>{sector.name}</TableCell>
+                  <TableCell align="right">{sector.machineCount}</TableCell>
                   <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                     <IconButton
                       aria-label={`Edit sector ${sector.code}`}
