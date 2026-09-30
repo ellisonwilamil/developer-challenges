@@ -1,17 +1,34 @@
-import type { ReactElement } from 'react';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import { lazy, Suspense, type ReactElement } from 'react';
 import type { RouteObject } from 'react-router';
 import { ImportPage } from '../features/import/import-page';
 import { MachineDetailPage } from '../features/machine-detail/machine-detail-page';
 import { MachinesPage } from '../features/machines/machines-page';
 import { MonitoringPointsPage } from '../features/monitoring-points/monitoring-points-page';
 import { OverviewPage } from '../features/overview/overview-page';
-import { PointDetailPage } from '../features/point-detail/point-detail-page';
 import { SectorsPage } from '../features/sectors/sectors-page';
 import { RequireSession } from '../features/session/require-session';
 import { AppLayout } from '../layout/app-layout';
 import { NAVIGATION } from '../layout/navigation';
 import { LoginPage } from '../pages/login-page';
 import { NotFoundPage } from '../pages/not-found-page';
+
+/**
+ * Loaded on demand: the charts bring Chart.js, about a quarter of the bundle, which no
+ * other screen needs.
+ */
+const PointDetailPage = lazy(() =>
+  import('../features/point-detail/point-detail-page').then((module) => ({
+    default: module.PointDetailPage,
+  })),
+);
+
+const loading = (
+  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+    <CircularProgress aria-label="Loading screen" />
+  </Box>
+);
 
 /** The screen of each menu entry; the type makes a missing one a compile error. */
 const SCREENS: Record<(typeof NAVIGATION)[number]['path'], ReactElement> = {
@@ -39,7 +56,14 @@ export const routes: RouteObject[] = [
             element: SCREENS[item.path],
           })),
           { path: '/machines/:id', element: <MachineDetailPage /> },
-          { path: '/monitoring-points/:id', element: <PointDetailPage /> },
+          {
+            path: '/monitoring-points/:id',
+            element: (
+              <Suspense fallback={loading}>
+                <PointDetailPage />
+              </Suspense>
+            ),
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

@@ -106,6 +106,12 @@ const pointRoutes = {
 };
 
 describe('monitoring point page', () => {
+  // The route loads the page on demand. Loading it once here keeps the first test from
+  // waiting on the module transform, which under a busy machine outlasts a query's wait.
+  beforeAll(async () => {
+    await import('./point-detail-page');
+  }, 30_000);
+
   beforeEach(() => {
     setScreen('wide');
   });
