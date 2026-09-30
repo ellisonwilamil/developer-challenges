@@ -281,9 +281,17 @@ user's own, and only says it is installed elsewhere when it is not (A4):
 A `TcAg` or `TcAs` sensor on a pump answers `422` on the `model` field, naming the
 accepted models (B15).
 
-`GET /api/sensors` arrives with the simulator. It will answer
-`[{ serialNumber, model, monitoringPointId, location, machineTag, machineType }]`,
-which is how the simulator discovers what to simulate.
+`GET /api/sensors` answers the installed sensors of the user, sorted by serial number:
+
+```json
+[{ "serialNumber": "DX-001234", "model": "TcAs", "monitoringPointId": "…", "location": "FAN_MOTOR_DE", "machineTag": "DRY-FAN-01", "machineType": "Fan" }]
+```
+
+It is how the simulator discovers what to simulate. `serialNumber`, repeated for
+several, narrows the answer; each one is normalized as in B4, and at most 1,000 are
+accepted. A serial number that is unknown, removed or another user's is absent from the
+answer, the same in the three cases (A4); the caller compares what it asked with what
+came back.
 
 ## Time-series
 

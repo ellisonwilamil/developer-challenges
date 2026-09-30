@@ -232,6 +232,28 @@ series of C10 (acceleration and velocity on three axes, plus temperature). Value
 follow configurable profiles per machine type, with seeded noise, so the same seed
 reproduces the same values: running a backfill twice inserts nothing new.
 
+- **Values.** The profiles in `apps/simulator/src/telemetry/profiles.ts` are synthetic
+  levels of a healthy machine, not measurements: a level per quantity and axis, a daily
+  load cycle, a fixed offset per sensor and quantity (the same on the three axes, so the
+  profile's proportions hold) and a random spread.
+- **Determinism.** Each value comes from a hash of the seed, the sensor, the series and
+  the instant, never from a sequence, and instants are multiples of the interval since
+  the epoch. The same reading always has the same value, so a repeated or overlapping
+  run only repeats readings (C5). Changing the formula or the profiles changes the
+  values: over data sent before such a change, the API refuses the new values as
+  conflicts. Use another seed, or delete those series first.
+- **Account.** The simulator logs in like the interface, with `SIMULATOR_EMAIL` and
+  `SIMULATOR_PASSWORD` from the environment, never from the command line, which the
+  shell history keeps. A session lasts one hour, so an answer `401` leads to one new
+  login and one retry.
+- **Limits.** Submissions hold at most 10,000 readings (C8). A backfill is limited by the
+  50,000 readings of a series: 347 days at 10 minutes, more at a longer interval.
+- **Failures.** A serial number asked for that is not installed stops the command with
+  its name. A backfill that finds no sensor fails, since ending without data is not a
+  success; the live mode says at each instant that it sent nothing. In live mode, a
+  failed instant is reported and the next one is tried. Exit codes: 0 done, 1 could not
+  do it, 2 wrong command line.
+
 ## D. Non-functional requirements
 
 **D1. Latency below 350 ms.** Measured as API response time in a local environment,

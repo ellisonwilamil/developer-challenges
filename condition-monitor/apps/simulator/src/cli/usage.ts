@@ -17,4 +17,9 @@ Options:
                         A series holds at most 50,000 readings: 347 days at 10 minutes.
   --api-url <url>       Default: ${DEFAULTS.apiUrl}.
   -h, --help            show this help
+
+Environment (read from .env when present):
+  SIMULATOR_EMAIL, SIMULATOR_PASSWORD   the account to log in with.
+
+Exit codes: 0 done, 1 could not send, 2 wrong command line.
 `;

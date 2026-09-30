@@ -23,8 +23,8 @@ tests and screen:
 | Machines | done: paginated, sortable list, tag built from sector, type and number |
 | Monitoring points and sensors | done: positions per machine type, one sensor per point, pump rule, the paginated list sortable by every column |
 | Time-series | done: readings from CSV or JSON, metrics, full retrieval, deletion, the count on the overview, charts per monitoring point |
-| Simulator | next |
-| Latency measurement | planned |
+| Simulator | done: backfill and live telemetry for the installed sensors, through the API |
+| Latency measurement | next |
 
 ## Stack
 
@@ -112,7 +112,7 @@ The seed creates only the user and the `DRY` sector. To see a chart:
 2. Install a sensor with serial number `DX-000001` at one of them: `HF+` on a pump, any
    model on a fan.
 3. In **CSV import**, download the example file and import it: one day of the seven
-   series of that sensor, with synthetic values.
+   series of that sensor, with synthetic values. Or run the simulator, below.
 4. In **Monitoring points**, open the point: one chart per quantity, and the metrics of
    each series.
 
@@ -120,12 +120,29 @@ Importing the same file again stores nothing new and says so.
 
 ### Simulator
 
+A command-line client that plays the sensors (assumption C13). It logs in with
+`SIMULATOR_EMAIL` and `SIMULATOR_PASSWORD` from `.env`, discovers the installed sensors
+through the API and sends their seven series. With the API running:
+
 ```bash
-npm run simulate -- help
+npm run simulate -- backfill --days 30
 ```
 
-It parses its commands and options already; generating telemetry arrives with the
-simulator slice, and until then `backfill` and `live` exit with an error saying so.
+```bash
+npm run simulate -- live
+```
+
+- `backfill` sends a history ending now and exits; `live` sends the current reading
+  every 10 minutes until stopped with Ctrl+C.
+- `--serial DX-000001` limits it to one sensor, repeatable for several; `--interval`,
+  `--seed` and `--api-url` change the defaults. `npm run simulate -- help` lists them.
+- The same seed gives the same values, so running a backfill again stores nothing new.
+- It exits with 0 when done, 1 when it could not send (API unreachable, login refused,
+  no sensor installed, a serial number not installed), and 2 for a wrong command line.
+
+A 30-day backfill of two sensors, 60,480 readings, took 4.8 s on the development
+machine, and running it again 2.7 s (measured once each with `date` around the command;
+not a benchmark).
 
 ## Assumptions
 
