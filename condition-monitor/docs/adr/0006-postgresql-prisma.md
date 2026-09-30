@@ -29,7 +29,12 @@ migration holds one change.
 - Part of the schema lives in SQL outside `schema.prisma`, so the migrations are the
   complete source of truth, and integration tests prove those constraints reject
   invalid data ([ADR 0010](0010-testing-strategy.md)).
-- A migration regenerated from `schema.prisma` alone would drop the hand-written SQL;
-  new migrations are generated and then completed, never regenerated.
+- A migration regenerated from `schema.prisma` alone would drop the hand-written SQL.
+  For that reason `prisma migrate dev` is not used: it compares the schema with the
+  database and writes whatever makes them equal, including dropping the `CHECK`
+  constraints and the partial index. `npm run db:migration -- --name=<name>` compares
+  instead the committed `schema.prisma` with the edited one, so the new migration holds
+  only the change being made. The hand-written SQL is then appended to it, and
+  `npm run db:deploy` applies it.
 - Prisma Migrate does not generate `down` migrations; reverting a change means a new
   migration.

@@ -158,7 +158,7 @@ A machine:
 | `GET /api/machines` | query `sectorId?`, pagination | `200`, page of machines | `422` |
 | `GET /api/machines/next-number` | query `sectorId`, `type` | `200 { number, tag }` | `404` sector, `409` numbers already reach 999, `422` |
 | `POST /api/machines` | `{ sectorId, type, number, name }` | `201`, the machine | `404` sector, `409` tag in use, on the `number` field, `422` |
-| `GET /api/machines/:id` | none | `200`, the machine | `404` |
+| `GET /api/machines/:id` | none | `200`, the machine with its points and counts | `404` |
 | `PATCH /api/machines/:id` | `{ name?, type?, sectorId?, number? }` | `200`, the machine | `404`, `409` tag in use, `409` type change invalidates points (B5), `422` |
 | `DELETE /api/machines/:id` | none | `204`, cascades to points, sensors, series and readings (B6) | `404` |
 
@@ -175,8 +175,20 @@ List: `pageSize` defaults to 10, at most 100. `sort` is one of:
 | `sector` | sector name, then tag |
 
 `next-number` suggests one above the highest number of that type in the sector, so a
-retired number is not reused (B10). The monitoring points of a machine, and the
-counts shown before deleting it, join the detail answer with the points.
+retired number is not reused (B10).
+
+The detail adds the machine's monitoring points, in power-flow order (B11), and the
+counts the interface shows before a deletion removes them (B6):
+
+```json
+{
+  "id": "…",
+  "tag": "DRY-FAN-01",
+  "…": "the other machine fields",
+  "monitoringPoints": [{ "id": "…", "name": "Motor, drive end bearing", "location": "FAN_MOTOR_DE", "machine": { "…": "…" }, "sensor": null }],
+  "counts": { "monitoringPoints": 1, "sensors": 0 }
+}
+```
 
 ## Monitoring points
 
@@ -197,18 +209,39 @@ A monitoring point:
 | Route | Request | Success | Errors |
 |---|---|---|---|
 | `GET /api/monitoring-points` | pagination | `200`, page of points | `422` |
-| `POST /api/machines/:id/monitoring-points` | `{ positions: [{ location, name? }] }` | `201 { items }`, the points created | `404` machine, `409` position in use, `422` position not of the machine type |
+| `POST /api/machines/:id/monitoring-points` | `{ positions: [{ location, name? }] }` | `201 { items }`, the points created | `404` machine, `409` position in use, `422` |
 | `GET /api/monitoring-points/:id` | none | `200`, the point | `404` |
-| `PATCH /api/monitoring-points/:id` | `{ name?, location? }` | `200`, the point | `404`, `409`, `422` |
+| `PATCH /api/monitoring-points/:id` | `{ name?, location? }`, at least one | `200`, the point | `404`, `409` position in use, `422` |
 | `DELETE /api/monitoring-points/:id` | none | `204`, cascades to sensor, series and readings | `404` |
 
-List, the one required by the challenge: `pageSize` defaults to 5, at most 100; `sort`
-is one of `machineName` (default), `machineType`, `monitoringPointName`,
-`sensorModel`, `machineTag`, `location`. Points without a sensor sort last in both
-orders (B7).
+List, the one required by the challenge: `pageSize` defaults to 5, at most 100. `sort`
+is one of:
+
+| Key | Order |
+|---|---|
+| `machineName` (default) | machine name, then tag |
+| `machineType` | type, Fan before Pump, then sector code and number |
+| `monitoringPointName` | point name, then tag |
+| `sensorModel` | model as `HF+`, `TcAg`, `TcAs`; points without a sensor last in both orders (B7), then tag |
+| `machineTag` | sector code, type, number, as the tag reads |
+| `location` | position in power-flow order (B11), not by label, then tag |
+
+`order` applies to the chosen column, and for `machineName` to the tag after it. The
+other tiebreakers stay ascending and end in the position and the primary key, so rows
+never skip or repeat between pages (B8).
 
 Creation takes several positions at once, as selected in the interface, and is all or
-nothing. A missing `name` defaults to the position label (B12).
+nothing. A missing `name` defaults to the position label (B12). Every refused position
+is named by its index, so the interface marks each one:
+
+| Case | Status | `field` |
+|---|---|---|
+| Position of the other machine type | `422` | `positions.N.location` |
+| Same position selected twice in the request | `422` | `positions.N.location` |
+| Position already taken on the machine | `409` | `positions.N.location` |
+
+`OTHER` is the only position that may repeat (B11). Moving a point with `PATCH` to a
+taken position answers `409` on the `location` field.
 
 ## Sensor of a monitoring point
 
@@ -217,13 +250,33 @@ A point has at most one sensor, so the sensor is a sub-resource of the point.
 | Route | Request | Success | Errors |
 |---|---|---|---|
 | `PUT /api/monitoring-points/:id/sensor` | `{ serialNumber, model }` | `200`, the point with its sensor | `404` point, `409` serial number installed elsewhere, `422` model not allowed for the machine type |
-| `DELETE /api/monitoring-points/:id/sensor` | none | `204`; the series stay on the point | `404` |
+| `DELETE /api/monitoring-points/:id/sensor` | none | `204`; the series stay on the point | `404` point, or point without a sensor |
 | `GET /api/sensors` | query `serialNumber?` (repeatable) | `200`, installed sensors | `422` |
 
 `PUT` installs a sensor or replaces the current one (B14); sending the same sensor
-again changes nothing. `GET /api/sensors` answers
-`[{ serialNumber, model, monitoringPointId, location, machineTag, machineType }]` and
-is how the simulator discovers what to simulate.
+again changes nothing. The serial number is trimmed and uppercased, then must be 3 to
+40 letters, digits or hyphens, so `dx-0012` and `DX-0012` are one sensor (B4).
+
+A sensor installed on another point is refused, not moved: it has to be removed there
+first (B14). The `409` names the machine tag and the point when the sensor is the
+user's own, and only says it is installed elsewhere when it is not (A4):
+
+```json
+{
+  "type": "urn:condition-monitor:error:conflict",
+  "title": "Sensor installed elsewhere",
+  "status": 409,
+  "detail": "Sensor DX-0012 is installed at DRY-FAN-01, Motor, drive end bearing. Remove it there first.",
+  "errors": [{ "field": "serialNumber", "message": "DX-0012 is installed at DRY-FAN-01, Motor, drive end bearing. Remove it there first." }]
+}
+```
+
+A `TcAg` or `TcAs` sensor on a pump answers `422` on the `model` field, naming the
+accepted models (B15).
+
+`GET /api/sensors` arrives with the simulator. It will answer
+`[{ serialNumber, model, monitoringPointId, location, machineTag, machineType }]`,
+which is how the simulator discovers what to simulate.
 
 ## Time-series
 

@@ -48,6 +48,10 @@ on exactly one monitoring point, as a physical sensor is mounted at one location
 unique across the whole system, enforced by a unique index. It is typed today; the
 field is ready for a barcode reader, which behaves as a keyboard. The internal primary
 key is separate.
+The serial number is trimmed and uppercased, then must be 3 to 40 letters, digits or
+hyphens, a `CHECK` repeating the rule in the database. Labels are printed in capitals,
+and `dx-0012` typed by hand is the same sensor as `DX-0012`; accepting both spellings
+as two sensors would let the same device be installed twice.
 
 **B5. Changing a machine type.** A type change is rejected with `409` when any
 monitoring point would become invalid: a `TcAg` or `TcAs` sensor under `Pump`, or an
@@ -59,8 +63,8 @@ time-series and readings. The interface asks for confirmation and shows what wil
 removed, so nothing disappears silently.
 
 **B7. Monitoring point without a sensor.** It is listed with an empty sensor model
-("No sensor"), and empty values sort last. Hiding the point would suggest it does not
-exist.
+("No sensor"), and sorts last in both orders, so the points that are measured come
+first either way. Hiding the point would suggest it does not exist.
 
 **B8. Pagination and sorting.** Pagination and sorting run on the server, 5 items per
 page, by any column, always with a tiebreaker on the primary key so items never skip or
@@ -124,6 +128,9 @@ recorded in machine directions (horizontal, vertical, axial), not in sensor axes
 **B14. Sensor replacement.** A monitoring point holds its current sensor. Replacing a
 sensor replaces the record, and the time-series stay on the point, so the bearing's
 history continues. The identity of the previous sensor is not kept.
+A sensor installed on another point is refused, not moved: the user removes it there
+first. Moving it in one step would leave the other point without a sensor, a change
+the user did not ask for on a screen that does not show that point.
 
 **B15. Sensor model rule.** The challenge forbids `TcAg` and `TcAs` on `Pump` machines,
 and that rule is implemented as stated. Field guidance for centrifugal pumps is finer

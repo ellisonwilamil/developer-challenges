@@ -98,6 +98,7 @@ for no answer.
 | Position unique per machine, except `OTHER` | partial unique index on `(machineId, location) WHERE location <> 'OTHER'` | B11 |
 | At most one sensor per monitoring point | unique index on `Sensor.monitoringPointId` | B3 |
 | Serial number unique across the system | unique index on `Sensor.serialNumber` | B4 |
+| Serial number is 3 to 40 uppercase letters, digits or hyphens | `CHECK` on `sensors.serial_number` | B4 |
 | No `TcAg` or `TcAs` sensor on a pump | `CHECK` on `Sensor`, see below | B15 |
 | One series per point, quantity and axis | unique index on `(monitoringPointId, quantity, axis) NULLS NOT DISTINCT` | C1 |
 | Temperature has no axis; vibration has one | `CHECK ((quantity = 'TEMPERATURE') = (axis IS NULL))` | C10 |

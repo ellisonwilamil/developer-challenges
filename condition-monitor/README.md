@@ -21,8 +21,8 @@ tests and screen:
 | Authentication | done: login, logout, session cookie, every route private by default |
 | Sectors | done: list, create, edit and delete, with the `DRY` sector seeded |
 | Machines | done: paginated, sortable list, tag built from sector, type and number |
-| Monitoring points and sensors | next |
-| Time-series | planned |
+| Monitoring points and sensors | done: positions per machine type, one sensor per point, pump rule, the paginated list sortable by every column |
+| Time-series | next |
 | Simulator | planned |
 
 Until its slice lands, a screen shows a placeholder.
@@ -124,6 +124,21 @@ taken in [docs/assumptions.md](docs/assumptions.md).
 Entities, relations and database rules in [docs/domain-model.md](docs/domain-model.md).
 Components, workspace layout and data flows in [docs/architecture.md](docs/architecture.md).
 REST endpoints, payloads and error format in [docs/api-contract.md](docs/api-contract.md).
+
+## Changing the database schema
+
+Edit `apps/api/prisma/schema.prisma`, then, before committing it:
+
+```bash
+npm run db:migration -- --name=add_something
+npm run db:deploy
+```
+
+The first command writes a migration holding only the change since the last commit.
+Rules Prisma cannot model, such as `CHECK` constraints and partial indexes, are then
+added to that file by hand, and the second command applies it. `prisma migrate dev` is
+not used, since it would drop those hand-written rules
+([ADR 0006](docs/adr/0006-postgresql-prisma.md)).
 
 ## Testing
 
