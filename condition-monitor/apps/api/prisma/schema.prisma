@@ -106,7 +106,39 @@ model MonitoringPoint {
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
   machine     Machine     @relation(fields: [machineId, machineType], references: [id, type], onDelete: Cascade, onUpdate: Cascade)
+  sensor      Sensor?
 
+  /// Target of the composite foreign key that copies the type into the sensor.
+  @@unique([id, machineType])
   @@index([machineId])
   @@map("monitoring_points")
+}
+
+/// Declared in alphabetical order of their labels (HF+, TcAg, TcAs), since PostgreSQL
+/// sorts an enum by declaration order.
+enum SensorModel {
+  HF_PLUS
+  TC_AG
+  TC_AS
+
+  @@map("sensor_model")
+}
+
+/// The sensor mounted at a monitoring point, at most one per point (B3), identified by
+/// its serial number (B4). machineType is a copy of the point's copy, kept equal by the
+/// composite foreign key, so a CHECK on this row enforces the challenge rule: no TcAg or
+/// TcAs sensor on a pump (B15).
+model Sensor {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  monitoringPointId String          @unique @map("monitoring_point_id") @db.Uuid
+  machineType       MachineType     @map("machine_type")
+  serialNumber      String          @unique @map("serial_number")
+  model             SensorModel
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  monitoringPoint   MonitoringPoint @relation(fields: [monitoringPointId, machineType], references: [id, machineType], onDelete: Cascade, onUpdate: Cascade)
+
+  /// Required by Prisma for a one-to-one relation over both columns.
+  @@unique([monitoringPointId, machineType])
+  @@map("sensors")
 }
