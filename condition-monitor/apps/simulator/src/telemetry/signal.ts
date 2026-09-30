@@ -48,9 +48,11 @@ export interface SignalInput {
  * run twice, or overlapping the live mode, repeats readings instead of conflicting (C5).
  */
 export function valueAt(input: SignalInput): number {
-  const series = `${input.seed}|${input.serialNumber}|${input.quantity}|${input.axis ?? ''}`;
-  // Fixed per sensor and series: no two sensors sit at exactly the same level.
-  const offset = 2 * uniform(`${series}|sensor`) - 1;
+  const sensor = `${input.seed}|${input.serialNumber}|${input.quantity}`;
+  const series = `${sensor}|${input.axis ?? ''}`;
+  // Fixed per sensor and quantity, the same on the three axes: no two sensors sit at
+  // exactly the same level, and each keeps the profile's proportions between axes.
+  const offset = 2 * uniform(`${sensor}|offset`) - 1;
   const noise = gaussian(`${series}|${input.timestamp}`);
   const cycle = dailyCycle(input.timestamp);
   const profile = PROFILES[input.machineType];

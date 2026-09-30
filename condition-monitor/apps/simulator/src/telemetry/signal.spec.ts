@@ -79,6 +79,16 @@ describe('valueAt', () => {
     }
   });
 
+  it('keeps the order of the axes of the profile for every sensor', () => {
+    for (const serialNumber of ['DX-0001', 'DX-0002', 'DX-0003', 'DX-0004', 'DX-0005']) {
+      const level = (axis: 'H' | 'V' | 'A') =>
+        mean(day.map((timestamp) => valueAt({ ...input, serialNumber, axis, timestamp })));
+      // A fan: horizontal above vertical above axial, as unbalance gives.
+      expect(level('H')).toBeGreaterThan(level('V'));
+      expect(level('V')).toBeGreaterThan(level('A'));
+    }
+  });
+
   it('follows the daily cycle: the afternoon is higher than the night', () => {
     const at = (hour: number) =>
       mean(

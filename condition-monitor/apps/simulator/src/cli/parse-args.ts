@@ -6,10 +6,9 @@ import { backfillCount, maxBackfillDays } from '../telemetry/grid';
  * Commands of the simulator (assumption C13): `backfill` sends a history and exits,
  * `live` sends current readings at a fixed interval, like a real sensor.
  */
-export type Command =
-  | { name: 'help' }
-  | ({ name: 'backfill'; days: number } & CommonOptions)
-  | ({ name: 'live' } & CommonOptions);
+export type BackfillCommand = { name: 'backfill'; days: number } & CommonOptions;
+export type LiveCommand = { name: 'live' } & CommonOptions;
+export type Command = { name: 'help' } | BackfillCommand | LiveCommand;
 
 export interface CommonOptions {
   apiUrl: string;
