@@ -63,3 +63,14 @@ export function importRejected(
     errors: listed,
   });
 }
+
+/** A file refused as a whole, before any line can be judged: not UTF-8, wrong header. */
+export function fileRejected(message: string): ProblemException {
+  return new ProblemException({
+    type: IMPORT_PROBLEM_TYPE,
+    title: 'Import rejected',
+    status: 422,
+    detail: `${message} Nothing was stored.`,
+    errors: [{ field: 'file', message }],
+  });
+}

@@ -16,19 +16,26 @@ import {
 
 /**
  * How errors point at a reading: by its index in a JSON body, or by its line in a CSV
- * file, where the header is line 1.
+ * file, where the header is line 1. Fields keep the names of their source, such as
+ * `serialNumber` in JSON and `serial_number` in CSV.
  */
 export interface Locator {
   unit: 'reading' | 'line';
   key: 'index' | 'line';
   of(position: number): number;
+  field(name: 'serialNumber' | 'value' | 'readings'): string;
 }
 
-export const JSON_LOCATOR: Locator = { unit: 'reading', key: 'index', of: (position) => position };
+export const JSON_LOCATOR: Locator = {
+  unit: 'reading',
+  key: 'index',
+  of: (position) => position,
+  field: (name) => name,
+};
 
 interface ReadingError {
   at: number;
-  field: string;
+  field: 'serialNumber' | 'value';
   message: string;
 }
 
@@ -114,7 +121,7 @@ export class IngestionService {
         const at = rows.find((row) => keyOf(row) === keyOf(series))?.at ?? 0;
         const reading = readings[at];
         return {
-          field: 'readings',
+          field: locator.field('readings'),
           message: `${reading.serialNumber}, ${seriesLabel(reading.quantity, reading.axis)}: would hold ${series.total.toLocaleString('en-US')} readings, above the limit of ${MAX_READINGS_PER_SERIES.toLocaleString('en-US')} per series.`,
         };
       });
@@ -127,7 +134,11 @@ export class IngestionService {
     const invalid = new Set(errors.map((error) => error.at)).size;
     return importRejected(
       locator.unit,
-      errors.map(({ at, field, message }) => ({ [locator.key]: locator.of(at), field, message })),
+      errors.map(({ at, field, message }) => ({
+        [locator.key]: locator.of(at),
+        field: locator.field(field),
+        message,
+      })),
       invalid,
     );
   }

@@ -98,6 +98,7 @@
     "@reduxjs/toolkit": "2.13.0",
     "bcryptjs": "3.0.3",
     "cookie-parser": "1.4.7",
+    "csv-parse": "7.0.3",
     "nestjs-zod": "5.5.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

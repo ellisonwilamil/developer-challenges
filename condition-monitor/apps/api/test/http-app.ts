@@ -37,16 +37,19 @@ export async function startHttpApp() {
 
 export type HttpClient = ReturnType<typeof client>;
 
+/** Sends JSON, or a form as is: fetch then writes the multipart boundary itself. */
 function client(baseUrl: string, cookie?: string) {
-  return (method: string, path: string, body?: unknown) =>
-    fetch(`${baseUrl}${path}`, {
+  return (method: string, path: string, body?: unknown) => {
+    const json = body !== undefined && !(body instanceof FormData);
+    return fetch(`${baseUrl}${path}`, {
       method,
       headers: {
         ...(cookie ? { Cookie: cookie } : {}),
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: json ? JSON.stringify(body) : (body as FormData) }),
     });
+  };
 }
 
 /** Reads a JSON answer with the shape the test expects; the assertions check it. */
