@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:integration": "nx run-many -t test-integration",
-    "db:migrate": "nx run api:prisma-migrate",
+    "db:migration": "nx run api:prisma-migration",
     "db:deploy": "nx run api:prisma-deploy",
     "simulate": "nx run simulator:build && node apps/simulator/dist/main.js",
     "db:seed": "nx run api:prisma-seed"
