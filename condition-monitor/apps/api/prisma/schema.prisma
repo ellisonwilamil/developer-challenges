@@ -60,15 +60,53 @@ enum MachineType {
 /// columns makes the tag unique. The name is free text and may repeat (B2). A sector that
 /// still has machines cannot be deleted (B9).
 model Machine {
-  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sectorId  String      @map("sector_id") @db.Uuid
-  type      MachineType
-  number    Int
-  name      String
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
-  sector    Sector      @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sectorId         String            @map("sector_id") @db.Uuid
+  type             MachineType
+  number           Int
+  name             String
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sector           Sector            @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  monitoringPoints MonitoringPoint[]
 
   @@unique([sectorId, type, number])
+  /// Target of the composite foreign key that copies the type into monitoring points.
+  @@unique([id, type])
   @@map("machines")
+}
+
+/// Installation positions of both machine types (B11), declared in power-flow order so
+/// sorting by position walks each machine from the motor's free end; OTHER comes last.
+enum Location {
+  PUMP_MOTOR_NDE
+  PUMP_MOTOR_DE
+  PUMP_COUPLING_SIDE
+  PUMP_IMPELLER_SIDE
+  PUMP_MECHANICAL_SEAL
+  FAN_MOTOR_NDE
+  FAN_MOTOR_DE
+  FAN_SHAFT_DE
+  FAN_SHAFT_NDE
+  OTHER
+
+  @@map("location")
+}
+
+/// A position on a machine where a sensor is mounted. machineType is a copy of the
+/// machine's type, kept equal by the composite foreign key with ON UPDATE CASCADE, so a
+/// CHECK on this row can require the position to belong to the type (domain model,
+/// "Rules that span tables"). The name is free text and may repeat (B2).
+model MonitoringPoint {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  machineId   String      @map("machine_id") @db.Uuid
+  machineType MachineType @map("machine_type")
+  location    Location
+  name        String
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  machine     Machine     @relation(fields: [machineId, machineType], references: [id, type], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([machineId])
+  @@map("monitoring_points")
 }
