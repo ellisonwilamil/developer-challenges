@@ -5,6 +5,15 @@ import { renderApp, setScreen } from '../testing/render-app';
 const loggedIn = {
   'GET /api/auth/me': () => Response.json(operator),
   'GET /api/health': () => Response.json({ status: 'ok' }),
+  'GET /api/overview': () =>
+    Response.json({
+      sectors: 0,
+      machines: 0,
+      monitoringPoints: 0,
+      sensors: 0,
+      timeSeries: 0,
+      readings: 0,
+    }),
 };
 
 const SCREENS = ['Overview', 'Sectors', 'Machines', 'Monitoring points', 'CSV import'];

@@ -80,6 +80,15 @@ describe('login', () => {
       'GET /api/auth/me': () => Response.json(operator),
       'GET /api/health': () => Response.json({ status: 'ok' }),
       'POST /api/auth/logout': noContent,
+      'GET /api/overview': () =>
+        Response.json({
+          sectors: 0,
+          machines: 0,
+          monitoringPoints: 0,
+          sensors: 0,
+          timeSeries: 0,
+          readings: 0,
+        }),
     });
     const { router } = renderApp('/');
 

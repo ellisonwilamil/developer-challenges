@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router';
 import { MachineDetailPage } from '../features/machine-detail/machine-detail-page';
 import { MachinesPage } from '../features/machines/machines-page';
 import { MonitoringPointsPage } from '../features/monitoring-points/monitoring-points-page';
+import { OverviewPage } from '../features/overview/overview-page';
 import { SectorsPage } from '../features/sectors/sectors-page';
 import { RequireSession } from '../features/session/require-session';
 import { AppLayout } from '../layout/app-layout';
@@ -13,6 +14,7 @@ import { PlaceholderPage } from '../pages/placeholder-page';
 
 /** Screens that have landed; the others show a placeholder until their slice does. */
 const SCREENS: Partial<Record<string, ReactElement>> = {
+  '/': <OverviewPage />,
   '/sectors': <SectorsPage />,
   '/machines': <MachinesPage />,
   '/monitoring-points': <MonitoringPointsPage />,
