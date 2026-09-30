@@ -93,7 +93,12 @@ export function MachinesPage() {
       return null;
     }
     return (
-      action.payload ?? { status: null, message: 'The machine was not saved.', fieldErrors: [] }
+      action.payload ?? {
+        status: null,
+        message: 'The machine was not saved.',
+        fieldErrors: [],
+        reasons: [],
+      }
     );
   };
 
@@ -206,7 +211,9 @@ export function MachinesPage() {
                 {page.items.map((machine) => (
                   <TableRow key={machine.id} hover>
                     <TableCell sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
-                      {machine.tag}
+                      <Link component={RouterLink} to={`/machines/${machine.id}`}>
+                        {machine.tag}
+                      </Link>
                     </TableCell>
                     <TableCell>{machine.name}</TableCell>
                     <TableCell>{machine.type}</TableCell>

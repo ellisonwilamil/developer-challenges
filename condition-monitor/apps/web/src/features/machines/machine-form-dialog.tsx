@@ -10,7 +10,6 @@ import {
   type Sector,
 } from '@condition-monitor/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -25,6 +24,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import type { RequestFailure } from '../../api/failure';
+import { FailureAlert } from '../../components/failure-alert';
 
 type MachineForm = z.input<typeof createMachineSchema>;
 
@@ -66,7 +66,7 @@ export function MachineFormDialog({
   onClose,
 }: MachineFormDialogProps) {
   const fullScreen = useMediaQuery(useTheme().breakpoints.down('sm'));
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useState<RequestFailure | null>(null);
   // Once the user types a number, suggestions stop overwriting it.
   const numberEdited = useRef(false);
   const {
@@ -130,7 +130,7 @@ export function MachineFormDialog({
       setError(fieldError.field as (typeof FIELDS)[number], { message: fieldError.message });
     }
     if (known.length === 0) {
-      setFailure(result.message);
+      setFailure(result);
     }
   };
 
@@ -145,11 +145,7 @@ export function MachineFormDialog({
       <form noValidate onSubmit={handleSubmit(submit)}>
         <DialogTitle>{machine ? `Edit machine ${machine.tag}` : 'New machine'}</DialogTitle>
         <DialogContent>
-          {failure && (
-            <Alert severity="error" sx={{ mb: 1 }}>
-              {failure}
-            </Alert>
-          )}
+          {failure && <FailureAlert message={failure.message} reasons={failure.reasons} />}
           <TextField
             {...register('name')}
             label="Name"

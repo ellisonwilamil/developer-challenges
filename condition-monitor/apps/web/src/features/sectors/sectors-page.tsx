@@ -39,7 +39,12 @@ export function SectorsPage() {
         : await dispatch(createSector(values));
     return createSector.fulfilled.match(action) || updateSector.fulfilled.match(action)
       ? null
-      : (action.payload ?? { status: null, message: 'The sector was not saved.', fieldErrors: [] });
+      : (action.payload ?? {
+          status: null,
+          message: 'The sector was not saved.',
+          fieldErrors: [],
+          reasons: [],
+        });
   };
 
   const remove = async () => {

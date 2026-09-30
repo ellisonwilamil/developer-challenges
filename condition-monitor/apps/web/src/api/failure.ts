@@ -9,15 +9,34 @@ export interface RequestFailure {
   status: number | null;
   message: string;
   fieldErrors: FieldError[];
+  /**
+   * Errors that belong to no form field, such as the points a machine type change would
+   * invalidate, as "name: reason" lines the screen lists under the message.
+   */
+  reasons: string[];
+}
+
+function reasonsOf(error: ApiError): string[] {
+  return (error.problem?.errors ?? []).flatMap((item) =>
+    typeof item['reason'] === 'string'
+      ? [typeof item['name'] === 'string' ? `${item['name']}: ${item['reason']}` : item['reason']]
+      : [],
+  );
 }
 
 export function toFailure(error: unknown): RequestFailure {
   if (error instanceof ApiError) {
-    return { status: error.status, message: error.message, fieldErrors: fieldErrorsOf(error) };
+    return {
+      status: error.status,
+      message: error.message,
+      fieldErrors: fieldErrorsOf(error),
+      reasons: reasonsOf(error),
+    };
   }
   return {
     status: null,
     message: 'Could not reach the API. Try again in a moment.',
     fieldErrors: [],
+    reasons: [],
   };
 }

@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import type { RouteObject } from 'react-router';
+import { MachineDetailPage } from '../features/machine-detail/machine-detail-page';
 import { MachinesPage } from '../features/machines/machines-page';
 import { SectorsPage } from '../features/sectors/sectors-page';
 import { RequireSession } from '../features/session/require-session';
@@ -31,6 +32,7 @@ export const routes: RouteObject[] = [
             path: item.path,
             element: SCREENS[item.path] ?? <PlaceholderPage title={item.label} />,
           })),
+          { path: '/machines/:id', element: <MachineDetailPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

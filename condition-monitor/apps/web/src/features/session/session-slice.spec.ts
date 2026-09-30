@@ -56,6 +56,7 @@ describe('session', () => {
       status: 422,
       message: '1 field is invalid.',
       fieldErrors: [{ field: 'email', message: 'Bad.' }],
+      reasons: [],
     });
     expect(store.getState().session.status).toBe('unknown');
   });
@@ -92,7 +93,12 @@ describe('session', () => {
     const store = createStore();
     await store.dispatch(fetchSession());
     const anyRequest = createAsyncThunk('sectors/load', (_: void, { rejectWithValue }) =>
-      rejectWithValue({ status: 401, message: 'Authentication required.', fieldErrors: [] }),
+      rejectWithValue({
+        status: 401,
+        message: 'Authentication required.',
+        fieldErrors: [],
+        reasons: [],
+      }),
     );
 
     await store.dispatch(anyRequest());
