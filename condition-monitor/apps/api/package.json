@@ -144,7 +144,7 @@
     "@nestjs/platform-express": "11.2.6",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "bcryptjs": "3.0.3",
+    "bcrypt": "6.0.0",
     "cookie-parser": "1.4.7",
     "nestjs-zod": "5.5.0",
     "reflect-metadata": "0.2.2",

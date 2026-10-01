@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { BCRYPT_COST, verifyPassword } from '../auth/password';
 import { PrismaService } from '../prisma/prisma.service';
 import { resetDatabase } from '../../test/reset-database';

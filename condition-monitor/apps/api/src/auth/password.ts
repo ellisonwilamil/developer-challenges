@@ -1,11 +1,15 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
 
 /**
- * bcrypt work factor (assumption A1). Each step doubles the cost of a hash. Measured with
- * bcryptjs on the development machine (median of 5 checks, idle): cost 10 takes 81 ms and
- * cost 12 takes 321 ms. Cost 12 alone would spend almost the whole 350 ms latency budget
- * of a login, so the API uses 10, the minimum OWASP recommends for bcrypt.
+ * bcrypt work factor (assumption A1). Each step doubles the cost of a hash. Measured on
+ * the development machine with the native package (median of 5 checks, idle): cost 10
+ * takes 57 ms and cost 12 takes 226 ms. Cost 12 would leave little of the 350 ms latency
+ * budget of a login under load, so the API uses 10, the minimum OWASP recommends.
+ *
+ * The native `bcrypt` package computes in Node's thread pool. The pure JavaScript
+ * `bcryptjs` used before ran on the one thread that serves every request, so each login
+ * delayed all the others (docs/performance.md).
  */
 export const BCRYPT_COST = 10;
 
