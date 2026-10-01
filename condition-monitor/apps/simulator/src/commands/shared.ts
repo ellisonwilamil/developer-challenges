@@ -4,6 +4,7 @@ import {
   type SensorInstallation,
 } from '@condition-monitor/shared';
 import type { ApiClient } from '../api/client';
+import type { Degradation } from '../cli/parse-args';
 import { SERIES } from '../telemetry/readings';
 
 /** Where the commands write: progress to one stream, problems to the other. */
@@ -38,6 +39,20 @@ export async function discover(
     .filter((serial) => !found.has(serial));
   return { sensors, missing };
 }
+
+/** When this sensor starts to degrade, or null when it does not. */
+export function degradingSince(degrade: Degradation | null, serialNumber: string): number | null {
+  return degrade?.serialNumbers.includes(serialNumber) ? degrade.since : null;
+}
+
+/** Sensors asked to degrade that are not among the simulated ones: a mistake to report. */
+export function notSimulated(degrade: Degradation | null, sensors: SensorInstallation[]): string[] {
+  const simulated = new Set(sensors.map((sensor) => sensor.serialNumber));
+  return (degrade?.serialNumbers ?? []).filter((serial) => !simulated.has(serial));
+}
+
+export const notSimulatedMessage = (serials: string[]) =>
+  `Cannot degrade a sensor that is not being simulated: ${serials.join(', ')}.`;
 
 export const missingMessage = (missing: string[]) =>
   `Not installed at a monitoring point of this account: ${missing.join(', ')}.`;

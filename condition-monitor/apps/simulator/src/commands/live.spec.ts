@@ -12,6 +12,7 @@ function command(overrides: Partial<LiveCommand> = {}): LiveCommand {
     intervalMinutes: DEFAULTS.intervalMinutes,
     seed: 1,
     serialNumbers: [],
+    degrade: null,
     ...overrides,
   };
 }

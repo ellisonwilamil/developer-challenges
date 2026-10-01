@@ -15,6 +15,7 @@ describe('parseCommand', () => {
       intervalMinutes: 10,
       seed: DEFAULTS.seed,
       serialNumbers: [],
+      degrade: null,
     });
   });
 
@@ -39,6 +40,7 @@ describe('parseCommand', () => {
       intervalMinutes: 5,
       seed: 42,
       serialNumbers: ['DX-1', 'DX-2'],
+      degrade: null,
     });
   });
 
@@ -72,5 +74,36 @@ describe('parseCommand', () => {
 
   it('rejects a flag given without its value', () => {
     expect(() => parseCommand(['live', '--serial'])).toThrow('--serial needs a serial number.');
+  });
+
+  it('reads the sensors to degrade and the day it starts, in UTC', () => {
+    const command = parseCommand([
+      'backfill',
+      '--degrade',
+      'dx-1',
+      '--degrade',
+      'DX-2',
+      '--degrade-since',
+      '2026-09-15',
+    ]);
+
+    expect(command).toMatchObject({
+      degrade: { serialNumbers: ['DX-1', 'DX-2'], since: Date.UTC(2026, 8, 15) },
+    });
+  });
+
+  it('requires the start of a degradation, as a day, and only with --degrade', () => {
+    expect(() => parseCommand(['backfill', '--degrade', 'DX-1'])).toThrow(
+      '--degrade needs --degrade-since <YYYY-MM-DD>, the day it starts (UTC).',
+    );
+    expect(() =>
+      parseCommand(['backfill', '--degrade', 'DX-1', '--degrade-since', 'yesterday']),
+    ).toThrow(UsageError);
+    expect(() =>
+      parseCommand(['backfill', '--degrade', 'DX-1', '--degrade-since', '2026-13-40']),
+    ).toThrow(UsageError);
+    expect(() => parseCommand(['backfill', '--degrade-since', '2026-09-15'])).toThrow(
+      '--degrade-since applies only with --degrade.',
+    );
   });
 });

@@ -1,5 +1,5 @@
 import type { Axis, MachineType, Quantity } from '@condition-monitor/shared';
-import { DECIMALS, PROFILES, VARIATION } from './profiles';
+import { DECIMALS, DEGRADATION, PROFILES, VARIATION } from './profiles';
 
 /** FNV-1a: a small, stable 32-bit hash of a text. */
 function hash32(text: string): number {
@@ -40,6 +40,8 @@ export interface SignalInput {
   axis: Axis | null;
   /** Milliseconds since the epoch. */
   timestamp: number;
+  /** When set, the sensor degrades from this instant on. */
+  degradingSince?: number | null;
 }
 
 /**
@@ -56,15 +58,22 @@ export function valueAt(input: SignalInput): number {
   const noise = gaussian(`${series}|${input.timestamp}`);
   const cycle = dailyCycle(input.timestamp);
   const profile = PROFILES[input.machineType];
+  // Days of degradation at this instant; zero before it starts or without it.
+  const days =
+    input.degradingSince == null
+      ? 0
+      : Math.max(0, (input.timestamp - input.degradingSince) / 86_400_000);
 
   const value =
     input.quantity === 'temperature'
       ? profile.temperature +
         VARIATION.temperatureSpread * offset +
         VARIATION.dailyTemperature * cycle +
-        VARIATION.temperatureNoise * noise
+        VARIATION.temperatureNoise * noise +
+        DEGRADATION.temperaturePerDay * days
       : profile.vibration[input.quantity][input.axis ?? 'H'] *
         (1 + VARIATION.sensorSpread * offset) *
+        (1 + DEGRADATION.vibrationPerDay * days) *
         (1 + VARIATION.dailyLoad * cycle) *
         (1 + VARIATION.vibrationNoise * noise);
 

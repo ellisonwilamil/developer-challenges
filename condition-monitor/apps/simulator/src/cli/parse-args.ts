@@ -16,6 +16,14 @@ export interface CommonOptions {
   seed: number;
   /** Empty means every installed sensor, discovered through the API. */
   serialNumbers: string[];
+  /** Sensors whose levels rise from an instant on, or null when none degrades. */
+  degrade: Degradation | null;
+}
+
+export interface Degradation {
+  serialNumbers: string[];
+  /** Milliseconds since the epoch: before it, the sensor behaves like the others. */
+  since: number;
 }
 
 /** A command line that cannot run; the message says what to fix. */
@@ -42,6 +50,8 @@ export function parseCommand(argv: string[]): Command {
       seed: { type: 'string' },
       days: { type: 'string' },
       'api-url': { type: 'string' },
+      degrade: { type: 'string', multiple: true },
+      'degrade-since': { type: 'string' },
     },
   });
 
@@ -51,7 +61,16 @@ export function parseCommand(argv: string[]): Command {
   }
   // Unknown options first: the value after an unknown flag is read as a stray argument,
   // and naming that value would hide the real mistake.
-  const known = new Set(['help', 'serial', 'interval', 'seed', 'days', 'api-url']);
+  const known = new Set([
+    'help',
+    'serial',
+    'interval',
+    'seed',
+    'days',
+    'api-url',
+    'degrade',
+    'degrade-since',
+  ]);
   const unknown = Object.keys(values).find((key) => !known.has(key));
   if (unknown) {
     throw new UsageError(`Unknown option: --${unknown}`);
@@ -64,7 +83,8 @@ export function parseCommand(argv: string[]): Command {
     apiUrl: stringOption(values['api-url'], DEFAULTS.apiUrl),
     intervalMinutes: integerOption('interval', values.interval, DEFAULTS.intervalMinutes, 1, 1440),
     seed: integerOption('seed', values.seed, DEFAULTS.seed, 0, Number.MAX_SAFE_INTEGER),
-    serialNumbers: stringList(values.serial),
+    serialNumbers: stringList('serial', values.serial),
+    degrade: degradation(values.degrade, values['degrade-since']),
   };
 
   if (name === 'backfill') {
@@ -98,13 +118,33 @@ function stringOption(value: unknown, fallback: string): string {
   return value;
 }
 
-function stringList(value: unknown): string[] {
+function stringList(flag: string, value: unknown): string[] {
   if (value === undefined) return [];
   const list = (Array.isArray(value) ? value : [value]).map(String);
   if (list.some((item) => item === '' || item === 'true')) {
-    throw new UsageError('--serial needs a serial number.');
+    throw new UsageError(`--${flag} needs a serial number.`);
   }
   return list;
+}
+
+/**
+ * The start is given, never taken from the run: a backfill made on another day must
+ * produce the same value for the same instant, or the API would refuse it as a conflict.
+ */
+function degradation(serials: unknown, since: unknown): Degradation | null {
+  const serialNumbers = stringList('degrade', serials).map((serial) => serial.trim().toUpperCase());
+  if (serialNumbers.length === 0) {
+    if (since !== undefined) throw new UsageError('--degrade-since applies only with --degrade.');
+    return null;
+  }
+  const start =
+    typeof since === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(since)
+      ? Date.parse(`${since}T00:00:00Z`)
+      : NaN;
+  if (Number.isNaN(start)) {
+    throw new UsageError('--degrade needs --degrade-since <YYYY-MM-DD>, the day it starts (UTC).');
+  }
+  return { serialNumbers, since: start };
 }
 
 function integerOption(

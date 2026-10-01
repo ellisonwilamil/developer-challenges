@@ -47,6 +47,17 @@ export const VARIATION = {
   temperatureSpread: 3,
 } as const;
 
+/**
+ * How a degrading sensor drifts (the `--degrade` option): a slow, steady rise, the kind
+ * a trend forecast is meant to catch. Synthetic like the rest, not a fault model.
+ */
+export const DEGRADATION = {
+  /** Vibration grows by this fraction of its level per day. */
+  vibrationPerDay: 0.015,
+  /** Temperature grows by this many degrees per day. */
+  temperaturePerDay: 0.1,
+} as const;
+
 /** Decimals kept per quantity: finer than any sensor of this kind would report. */
 export const DECIMALS: Record<Quantity, number> = {
   acceleration_rms: 3,

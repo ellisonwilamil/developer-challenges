@@ -14,6 +14,7 @@ function command(overrides: Partial<BackfillCommand> = {}): BackfillCommand {
     intervalMinutes: DEFAULTS.intervalMinutes,
     seed: 1,
     serialNumbers: [],
+    degrade: null,
     ...overrides,
   };
 }
@@ -83,6 +84,38 @@ describe('backfill', () => {
 
     expect(await backfill(command(), { client, now: NOW, out })).toBe(1);
     expect(error[0]).toMatch(/No installed sensor found/);
+  });
+
+  it('degrades only the sensor asked for, and says so', async () => {
+    const { api, client, out, info } = setup();
+    const degrade = { serialNumbers: ['DX-0001'], since: NOW - 30 * 86_400_000 };
+
+    await backfill(command({ days: 1, degrade }), { client, now: NOW, out });
+    const degraded = new Map(api.stored);
+    const again = setup();
+    await backfill(command({ days: 1 }), { client: again.client, now: NOW, out: again.out });
+
+    const changed = [...degraded].filter(([key, value]) => again.api.stored.get(key) !== value);
+    expect(changed.length).toBeGreaterThan(900);
+    expect(new Set(changed.map(([key]) => key.split('|')[0]))).toEqual(new Set(['DX-0001']));
+    expect(
+      info.some((line) => line.startsWith('DX-0001') && line.includes('degrading since')),
+    ).toBe(true);
+  });
+
+  it('fails when the sensor to degrade is not among the simulated ones', async () => {
+    const { api, client, out, error } = setup();
+    const degrade = { serialNumbers: ['DX-0001'], since: NOW };
+
+    const code = await backfill(command({ serialNumbers: ['DX-0002'], degrade }), {
+      client,
+      now: NOW,
+      out,
+    });
+
+    expect(code).toBe(1);
+    expect(error).toEqual(['Cannot degrade a sensor that is not being simulated: DX-0001.']);
+    expect(api.submissions).toHaveLength(0);
   });
 
   it('fails with the API message when a submission is refused', async () => {

@@ -108,4 +108,34 @@ describe('valueAt', () => {
       expect(Math.round(temperature * 10) / 10).toBe(temperature);
     }
   });
+
+  describe('a degrading sensor', () => {
+    const since = T0 + 10 * 86_400_000;
+    const at = (dayOffset: number, extra: Partial<SignalInput> = {}) =>
+      day.map((timestamp) =>
+        valueAt({ ...input, ...extra, timestamp: timestamp + dayOffset * 86_400_000 }),
+      );
+
+    it('is the same as a healthy one until the degradation starts', () => {
+      expect(at(9, { degradingSince: since })).toEqual(at(9));
+    });
+
+    it('rises 1.5 % of its level per day afterwards', () => {
+      // Twenty days in: the level is 30 % higher, the noise being the same draw.
+      const healthy = mean(at(30));
+      const degraded = mean(at(30, { degradingSince: since }));
+
+      expect(degraded / healthy).toBeGreaterThan(1.29);
+      expect(degraded / healthy).toBeLessThan(1.32);
+    });
+
+    it('warms up by 0.1 °C per day', () => {
+      const temperature = { quantity: 'temperature', axis: null } as const;
+      const healthy = mean(at(30, temperature));
+      const degraded = mean(at(30, { ...temperature, degradingSince: since }));
+
+      expect(degraded - healthy).toBeGreaterThan(1.9);
+      expect(degraded - healthy).toBeLessThan(2.2);
+    });
+  });
 });

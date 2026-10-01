@@ -16,6 +16,11 @@ Options:
   --days <days>         backfill only: days of history. Default: ${DEFAULTS.days}.
                         A series holds at most 50,000 readings: 347 days at 10 minutes.
   --api-url <url>       Default: ${DEFAULTS.apiUrl}.
+  --degrade <number>    make this sensor degrade: vibration rises 1.5 % and temperature
+                        0.1 °C per day; repeat for several. Needs --degrade-since.
+  --degrade-since <YYYY-MM-DD>
+                        the day (UTC) the degradation starts. Keep it the same between
+                        runs, or the same instants would get other values.
   -h, --help            show this help
 
 Environment (read from .env when present):

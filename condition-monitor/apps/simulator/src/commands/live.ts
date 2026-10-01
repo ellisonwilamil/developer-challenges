@@ -7,9 +7,12 @@ import {
   addReport,
   chunk,
   count,
+  degradingSince,
   discover,
   emptyTotals,
   missingMessage,
+  notSimulated,
+  notSimulatedMessage,
   type Output,
 } from './shared';
 
@@ -34,9 +37,14 @@ export async function live(
 
   try {
     // A mistyped serial number is a mistake to fix now, not a warning every 10 minutes.
-    const { missing } = await discover(client, command.serialNumbers);
+    const { sensors, missing } = await discover(client, command.serialNumbers);
     if (missing.length > 0) {
       out.error(missingMessage(missing));
+      return 1;
+    }
+    const unknown = notSimulated(command.degrade, sensors);
+    if (unknown.length > 0) {
+      out.error(notSimulatedMessage(unknown));
       return 1;
     }
   } catch (error) {
@@ -60,7 +68,12 @@ export async function live(
       } else {
         const total = emptyTotals();
         const readings = sensors.flatMap((sensor) =>
-          sensorReadings(sensor, [instant], command.seed),
+          sensorReadings(
+            sensor,
+            [instant],
+            command.seed,
+            degradingSince(command.degrade, sensor.serialNumber),
+          ),
         );
         for (const batch of chunk(readings, MAX_READINGS_PER_SUBMISSION)) {
           addReport(total, await client.sendReadings(batch));

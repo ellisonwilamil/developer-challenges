@@ -6,10 +6,13 @@ import {
   addReport,
   chunk,
   count,
+  degradingSince,
   discover,
   emptyTotals,
   INSTANTS_PER_BATCH,
   missingMessage,
+  notSimulated,
+  notSimulatedMessage,
   type Output,
 } from './shared';
 
@@ -36,6 +39,12 @@ export async function backfill(
       return 1;
     }
 
+    const unknown = notSimulated(command.degrade, sensors);
+    if (unknown.length > 0) {
+      out.error(notSimulatedMessage(unknown));
+      return 1;
+    }
+
     const times = backfillTimes(deps.now, command.days, command.intervalMinutes);
     out.info(
       `Backfill of ${command.days} ${command.days === 1 ? 'day' : 'days'} every ${command.intervalMinutes} ${command.intervalMinutes === 1 ? 'minute' : 'minutes'}, from ${new Date(times[0]).toISOString()} to ${new Date(times[times.length - 1]).toISOString()}, for ${sensors.length} sensors.`,
@@ -43,13 +52,14 @@ export async function backfill(
     const total = emptyTotals();
     for (const sensor of sensors) {
       const own = emptyTotals();
+      const since = degradingSince(command.degrade, sensor.serialNumber);
       for (const instants of chunk(times, INSTANTS_PER_BATCH)) {
-        const readings = sensorReadings(sensor, instants, command.seed);
+        const readings = sensorReadings(sensor, instants, command.seed, since);
         addReport(own, await client.sendReadings(readings));
       }
       addReport(total, { sensors: [], totals: own });
       out.info(
-        `${sensor.serialNumber} at ${sensor.machineTag}, ${sensor.location}: ${count(own.readingsInserted)} stored, ${count(own.readingsRepeated)} already stored, ${own.seriesCreated} series created.`,
+        `${sensor.serialNumber} at ${sensor.machineTag}, ${sensor.location}${since === null ? '' : `, degrading since ${new Date(since).toISOString().slice(0, 10)}`}: ${count(own.readingsInserted)} stored, ${count(own.readingsRepeated)} already stored, ${own.seriesCreated} series created.`,
       );
     }
     out.info(
