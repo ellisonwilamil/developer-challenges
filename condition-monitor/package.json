@@ -17,7 +17,8 @@
     "db:migration": "nx run api:prisma-migration",
     "db:deploy": "nx run api:prisma-deploy",
     "simulate": "nx run simulator:build && node apps/simulator/dist/main.js",
-    "db:seed": "nx run api:prisma-seed"
+    "db:seed": "nx run api:prisma-seed",
+    "load:setup": "node load-tests/setup.mjs"
   },
   "workspaces": [
     "apps/*",
