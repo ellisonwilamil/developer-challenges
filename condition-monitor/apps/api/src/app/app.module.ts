@@ -8,6 +8,7 @@ import { MachinesModule } from '../machines/machines.module';
 import { MonitoringPointsModule } from '../monitoring-points/monitoring-points.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SectorsModule } from '../sectors/sectors.module';
+import { ForecastModule } from '../forecast/forecast.module';
 import { OverviewModule } from '../overview/overview.module';
 import { SensorsModule } from '../sensors/sensors.module';
 import { TimeSeriesModule } from '../time-series/time-series.module';
@@ -22,6 +23,7 @@ import { TimeSeriesModule } from '../time-series/time-series.module';
     SensorsModule,
     TimeSeriesModule,
     OverviewModule,
+    ForecastModule,
   ],
   controllers: [HealthController],
   providers: [

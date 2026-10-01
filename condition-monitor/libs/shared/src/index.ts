@@ -11,3 +11,4 @@ export * from './lib/machine-schemas.js';
 export * from './lib/point-schemas.js';
 export * from './lib/reading-schemas.js';
 export * from './lib/series-schemas.js';
+export * from './lib/forecast.js';
