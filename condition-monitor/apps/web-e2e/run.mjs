@@ -157,7 +157,9 @@ async function main() {
     env: {
       ...process.env,
       E2E_DATABASE_URL: DATABASE_URL,
-      E2E_API_URL: `http://localhost:${API_PORT}/api`,
+      // Through the web origin's proxy, so the session cookie is stored for the origin the
+      // browser uses, shared by cy.request, window.fetch and the app alike.
+      E2E_API_URL: `http://localhost:${WEB_PORT}/api`,
       E2E_WEB_URL: `http://localhost:${WEB_PORT}`,
       SEED_USER_EMAIL: accounts.user1.email,
       SEED_USER_PASSWORD: accounts.user1.password,
