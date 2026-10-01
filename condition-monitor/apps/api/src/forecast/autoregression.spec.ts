@@ -1,6 +1,7 @@
 import {
   backtest,
   fit,
+  fitWithHoldout,
   leastSquares,
   predict,
   quantile,
@@ -82,13 +83,26 @@ describe('quantile', () => {
   });
 });
 
+describe('fitWithHoldout', () => {
+  it('gives the same two models as fitting each part on its own', () => {
+    const values = series(300, { rise: 0.01, noise: 0.3 });
+
+    const { held, all } = fitWithHoldout(values, 48, 240);
+
+    expect(maxError([...held], [...fit(values.slice(0, 240), 48)])).toBeLessThan(1e-9);
+    expect(maxError([...all], [...fit(values, 48)])).toBeLessThan(1e-9);
+  });
+});
+
 describe('backtest', () => {
-  const options = { window: 48, horizon: 24, trainShare: 0.8, coverage: 0.9 };
+  const options = { horizon: 24, coverage: 0.9 };
+  const judge = (values: number[]) => {
+    const split = Math.floor(values.length * 0.8);
+    return backtest(values, fit(values.slice(0, split), 48), split, options);
+  };
 
   it('judges the model on the last fifth, one forecast per hour that leaves room for a day', () => {
-    const values = series(7 * 24, { noise: 0.3 });
-
-    const judged = backtest(values, options);
+    const judged = judge(series(7 * 24, { noise: 0.3 }));
 
     // 168 hours: fitted on 134, and 11 origins leave 24 hours ahead of them.
     expect(judged?.forecasts).toBe(11);
@@ -97,12 +111,14 @@ describe('backtest', () => {
   });
 
   it('beats "same hour yesterday" on a noisy cycle that rises', () => {
-    const judged = backtest(series(30 * 24, { rise: 0.01, noise: 0.3 }), options);
+    const judged = judge(series(30 * 24, { rise: 0.01, noise: 0.3 }));
 
     expect(judged?.error).toBeLessThan(judged?.baselineError as number);
   });
 
   it('answers null when the rest of the history is shorter than one forecast', () => {
-    expect(backtest(series(100), options)).toBeNull();
+    const values = series(100);
+
+    expect(backtest(values, fit(values.slice(0, 80), 48), 80, options)).toBeNull();
   });
 });

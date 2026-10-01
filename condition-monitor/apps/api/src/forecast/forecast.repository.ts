@@ -3,18 +3,32 @@ import type { DbQuantity } from '@condition-monitor/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import type { HourlyMean } from './build-forecast';
 
+export interface SeriesState {
+  quantity: DbQuantity;
+  readingCount: number;
+  latest: Date | null;
+}
+
 /** Reads what a forecast is computed from (ADR 0002). */
 @Injectable()
 export class ForecastRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** The quantity of a series of the user, or null when there is none (A4). */
-  async quantityOfOwned(ownerId: string, seriesId: string): Promise<DbQuantity | null> {
-    const series = await this.prisma.timeSeries.findFirst({
-      where: { id: seriesId, monitoringPoint: { machine: { sector: { ownerId } } } },
-      select: { quantity: true },
-    });
-    return series?.quantity ?? null;
+  /**
+   * What identifies the data of a series of the user: its quantity, how many readings it
+   * holds and the instant of the latest. Null when the user has no such series (A4). One
+   * light query: the count is kept by the database, the latest is the end of an index.
+   */
+  async stateOfOwned(ownerId: string, seriesId: string): Promise<SeriesState | null> {
+    const [state] = await this.prisma.$queryRaw<SeriesState[]>`
+      SELECT t.quantity::text AS quantity, t.reading_count AS "readingCount",
+             (SELECT max(timestamp) FROM readings WHERE series_id = t.id) AS latest
+      FROM time_series t
+      JOIN monitoring_points p ON p.id = t.monitoring_point_id
+      JOIN machines m ON m.id = p.machine_id
+      JOIN sectors s ON s.id = m.sector_id
+      WHERE t.id = ${seriesId}::uuid AND s.owner_id = ${ownerId}::uuid`;
+    return state ?? null;
   }
 
   /**

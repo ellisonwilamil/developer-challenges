@@ -9,8 +9,12 @@ export const FORECAST = {
   horizonHours: 24,
   /** Continuous hours of history a forecast needs: a week, of which a fifth judges it. */
   minHistoryHours: 7 * 24,
-  /** History used at most, so the model stays about how the machine runs now. */
-  maxHistoryHours: 90 * 24,
+  /**
+   * History used at most. A month keeps the model about how the machine runs now, and
+   * keeps the computation short: it runs on the thread that serves every request
+   * (docs/performance.md).
+   */
+  maxHistoryHours: 30 * 24,
   /** Share of the history, in time order, the model is fitted on when it is judged. */
   trainShare: 0.8,
   /** Share of the validation errors the band around the forecast covers. */

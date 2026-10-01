@@ -121,8 +121,38 @@ describe('forecast over HTTP', () => {
     expect(body.status === 'unavailable' && body.detail).toMatch(/^The series has 71 hours/);
   });
 
+  it('answers the kept forecast while the series is unchanged, and a new one after a reading', async () => {
+    await store(10 * 144 + 3);
+    const first = await readJson<Forecast>(await forecast());
+
+    const again = await readJson<Forecast>(await forecast());
+    // Six more readings complete the hour that was left out: the history grows by one.
+    await http.prisma.$executeRaw`
+      INSERT INTO readings (series_id, timestamp, value)
+      SELECT ${seriesId}::uuid, ${T0}::timestamptz + n * interval '10 minutes', 2
+      FROM generate_series(10 * 144 + 3, 10 * 144 + 8) AS n`;
+    const after = await readJson<Forecast>(await forecast());
+
+    expect(again).toEqual(first);
+    expect(first.status === 'available' && first.basedOn.to).toBe('2026-09-11T00:00:00.000Z');
+    expect(after.status === 'available' && after.basedOn.to).toBe('2026-09-11T01:00:00.000Z');
+  });
+
+  it('computes again after readings are removed', async () => {
+    await store(10 * 144 + 3);
+    await forecast();
+
+    await http.prisma.reading.deleteMany({
+      where: { timestamp: { gte: new Date(Date.parse(T0) + 3 * 24 * HOUR) } },
+    });
+
+    expect(await readJson<Forecast>(await forecast())).toMatchObject({ status: 'unavailable' });
+  });
+
   it('hides the series of another user, and answers 404 for an id that is not one', async () => {
     await store(10 * 144 + 3);
+    // Asked by its owner first: a kept forecast must stay hidden from anyone else.
+    expect((await forecast()).status).toBe(200);
 
     expect((await forecast(other)).status).toBe(404);
     expect((await forecast(operator, 'not-a-uuid')).status).toBe(404);

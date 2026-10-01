@@ -74,8 +74,8 @@ describe('buildForecast', () => {
     expect(Math.min(...forecast.points.map((point) => point.lower))).toBeGreaterThanOrEqual(0);
   });
 
-  it('looks back at most 90 days', () => {
-    const forecast = buildForecast(means(100 * 24 + 1));
+  it('looks back at most 30 days', () => {
+    const forecast = buildForecast(means(40 * 24 + 1));
 
     expect(forecast.status === 'available' && forecast.basedOn.hours).toBe(
       FORECAST.maxHistoryHours,

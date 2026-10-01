@@ -1,5 +1,5 @@
 import { FORECAST, type Forecast } from '@condition-monitor/shared';
-import { backtest, fit, predict } from './autoregression';
+import { backtest, fitWithHoldout, predict } from './autoregression';
 
 const HOUR = 3_600_000;
 
@@ -36,11 +36,12 @@ export function buildForecast(means: HourlyMean[], floor: number | null = null):
     };
   }
 
-  const values = continuous.map((mean) => mean.value);
-  const judged = backtest(values, {
-    window: FORECAST.windowHours,
+  const values = Float64Array.from(continuous, (mean) => mean.value);
+  // Judged on a model that had not seen the last fifth; used with everything known.
+  const split = Math.floor(values.length * FORECAST.trainShare);
+  const models = fitWithHoldout(values, FORECAST.windowHours, split);
+  const judged = backtest(values, models.held, split, {
     horizon: FORECAST.horizonHours,
-    trainShare: FORECAST.trainShare,
     coverage: FORECAST.bandCoverage,
   });
   if (!judged) {
@@ -48,8 +49,7 @@ export function buildForecast(means: HourlyMean[], floor: number | null = null):
     throw new Error('The minimum history is too short to judge a forecast.');
   }
 
-  // Judged on a model that had not seen the last fifth; used with everything known.
-  const predicted = predict(fit(values, FORECAST.windowHours), values, FORECAST.horizonHours);
+  const predicted = predict(models.all, values, FORECAST.horizonHours);
   const last = continuous[continuous.length - 1].hour.getTime();
   return {
     status: 'available',
