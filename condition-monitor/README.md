@@ -42,10 +42,14 @@ condition-monitor/
     api/              NestJS API, Prisma schema and migrations
     web/              React app built with Vite
     simulator/        command-line telemetry simulator
+    web-e2e/          Cypress end-to-end tests and the script that runs them
   libs/
     shared/           types, rules and mappings used by the three apps
+  load-tests/         k6 latency test, its plant setup and its runner
+  studies/forecast/   script that compares the forecasting candidates
   docker/postgres/    database initialisation scripts
-  docs/               assumptions, domain model, architecture, API contract, ADRs
+  docs/               assumptions, domain model, architecture, API contract, ADRs,
+                      performance and forecast study
   docker-compose.yml  PostgreSQL for development and integration tests
 ```
 
