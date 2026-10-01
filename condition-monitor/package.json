@@ -18,7 +18,8 @@
     "db:deploy": "nx run api:prisma-deploy",
     "simulate": "nx run simulator:build && node apps/simulator/dist/main.js",
     "db:seed": "nx run api:prisma-seed",
-    "load:setup": "node load-tests/setup.mjs"
+    "load:setup": "node load-tests/setup.mjs",
+    "load:test": "node load-tests/run.mjs"
   },
   "workspaces": [
     "apps/*",
@@ -48,6 +49,7 @@
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.0",
+    "@types/bcrypt": "6.0.0",
     "@types/cookie-parser": "1.4.10",
     "@types/jest": "30.0.0",
     "@types/node": "24.19.0",
@@ -97,7 +99,7 @@
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "@reduxjs/toolkit": "2.13.0",
-    "bcryptjs": "3.0.3",
+    "bcrypt": "6.0.0",
     "chart.js": "4.5.1",
     "chartjs-adapter-date-fns": "3.0.0",
     "cookie-parser": "1.4.7",
