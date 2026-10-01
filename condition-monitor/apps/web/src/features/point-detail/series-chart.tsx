@@ -1,6 +1,7 @@
-import type { ReadingsAnswer } from '@condition-monitor/shared';
+import type { ForecastAvailable, ReadingsAnswer } from '@condition-monitor/shared';
 import {
   Chart as ChartJS,
+  Filler,
   Legend,
   LinearScale,
   LineElement,
@@ -14,7 +15,8 @@ import Box from '@mui/material/Box';
 import { Line } from 'react-chartjs-2';
 
 // Only what a line over time needs, so the rest of Chart.js stays out of the bundle.
-ChartJS.register(LinearScale, TimeScale, PointElement, LineElement, Tooltip, Legend);
+// Filler shades the band of a forecast.
+ChartJS.register(LinearScale, TimeScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
 type ChartPoint = { x: number; y: number | null };
 
@@ -63,6 +65,49 @@ export interface ChartSeries {
   label: string;
   axis: string | null;
   answer: ReadingsAnswer;
+  /** Drawn after the readings when present. */
+  forecast?: ForecastAvailable;
+}
+
+/** Marks the datasets that only shade the band, to keep them out of the legend. */
+const BAND = ' (band)';
+
+/**
+ * A forecast as three datasets: the lower edge of its band, the upper edge filled down
+ * to the lower one, and the predicted line, dashed so it is never taken for a
+ * measurement.
+ */
+export function forecastDatasets(label: string, color: string, forecast: ForecastAvailable) {
+  const at = (pick: (point: ForecastAvailable['points'][number]) => number) =>
+    forecast.points.map((point) => ({ x: Date.parse(point.timestamp), y: pick(point) }));
+  const edge = { borderWidth: 0, pointRadius: 0, pointHitRadius: 0 };
+  return [
+    {
+      ...edge,
+      label: `${label}${BAND} lower`,
+      data: at((point) => point.lower),
+      borderColor: color,
+      backgroundColor: `${color}33`,
+      fill: false as const,
+    },
+    {
+      ...edge,
+      label: `${label}${BAND} upper`,
+      data: at((point) => point.upper),
+      borderColor: color,
+      backgroundColor: `${color}33`,
+      // Shades down to the dataset just before: the lower edge.
+      fill: '-1' as const,
+    },
+    {
+      label: `${label}, forecast`,
+      data: at((point) => point.value),
+      borderColor: color,
+      backgroundColor: color,
+      borderDash: [6, 4],
+      fill: false as const,
+    },
+  ];
 }
 
 /** A quantity over time, one line per axis, in the browser's local time (ADR 0009). */
@@ -87,7 +132,13 @@ export function SeriesChart({
       y: { title: { display: true, text: unit } },
     },
     elements: { point: { radius: 0 }, line: { borderWidth: 1.5 } },
-    plugins: { legend: { position: 'bottom' } },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { filter: (item) => !item.text.includes(BAND) },
+      },
+      tooltip: { filter: (item) => !(item.dataset.label ?? '').includes(BAND) },
+    },
   };
 
   return (
@@ -97,13 +148,19 @@ export function SeriesChart({
         role="img"
         options={options}
         data={{
-          datasets: series.map((item) => ({
-            label: item.label,
-            data: chartPoints(item.answer),
-            borderColor: COLORS[item.axis ?? 'none'],
-            backgroundColor: COLORS[item.axis ?? 'none'],
-            spanGaps: false,
-          })),
+          datasets: series.flatMap((item) => {
+            const color = COLORS[item.axis ?? 'none'];
+            return [
+              {
+                label: item.label,
+                data: chartPoints(item.answer),
+                borderColor: color,
+                backgroundColor: color,
+                spanGaps: false,
+              },
+              ...(item.forecast ? forecastDatasets(item.label, color, item.forecast) : []),
+            ];
+          }),
         }}
       />
     </Box>

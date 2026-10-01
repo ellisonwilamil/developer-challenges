@@ -1,4 +1,5 @@
-import { chartPoints } from './series-chart';
+import type { ForecastAvailable } from '@condition-monitor/shared';
+import { chartPoints, forecastDatasets } from './series-chart';
 
 const at = (minute: number) => new Date(Date.UTC(2026, 8, 29, 10, minute)).toISOString();
 const ms = (minute: number) => Date.parse(at(minute));
@@ -47,5 +48,31 @@ describe('chartPoints', () => {
     const readings = [0, 10, 20, 35, 45].map((minute) => ({ timestamp: at(minute), value: 1 }));
 
     expect(chartPoints({ downsampled: false, readings })).toHaveLength(5);
+  });
+});
+
+describe('forecastDatasets', () => {
+  const forecast: ForecastAvailable = {
+    status: 'available',
+    basedOn: { from: at(0), to: at(50), hours: 240 },
+    validation: { forecasts: 25, error: 0.05, baselineError: 0.08 },
+    points: [
+      { timestamp: at(30), value: 2, lower: 1.8, upper: 2.3 },
+      { timestamp: at(90), value: 2.1, lower: 1.7, upper: 2.6 },
+    ],
+  };
+
+  it('draws the band as two edges, the upper filled down to the lower, then a dashed line', () => {
+    const [lower, upper, line] = forecastDatasets('Velocity RMS, horizontal', '#1f77b4', forecast);
+
+    expect(lower.data).toEqual([
+      { x: ms(30), y: 1.8 },
+      { x: ms(90), y: 1.7 },
+    ]);
+    expect(upper.data.map((point) => point.y)).toEqual([2.3, 2.6]);
+    expect(upper.fill).toBe('-1');
+    expect(line.data.map((point) => point.y)).toEqual([2, 2.1]);
+    expect(line.borderDash).toEqual([6, 4]);
+    expect(line.label).toBe('Velocity RMS, horizontal, forecast');
   });
 });

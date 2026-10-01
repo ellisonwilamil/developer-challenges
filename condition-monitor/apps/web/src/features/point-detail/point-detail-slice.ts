@@ -1,4 +1,5 @@
 import type {
+  Forecast,
   MonitoringPoint,
   ReadingsAnswer,
   SeriesMetrics,
@@ -59,6 +60,14 @@ export interface PointDetailState {
     metrics: Record<string, SeriesMetrics>;
     readings: Record<string, ReadingsAnswer>;
   };
+  /** The forecast of every series, loaded only while it is shown. */
+  forecast: {
+    shown: boolean;
+    status: LoadStatus;
+    error: string | null;
+    requestId: string | null;
+    bySeries: Record<string, Forecast>;
+  };
 }
 
 const emptyData: PointDetailState['data'] = {
@@ -67,6 +76,14 @@ const emptyData: PointDetailState['data'] = {
   requestId: null,
   metrics: {},
   readings: {},
+};
+
+const emptyForecast: PointDetailState['forecast'] = {
+  shown: false,
+  status: 'idle',
+  error: null,
+  requestId: null,
+  bySeries: {},
 };
 
 const initialState: PointDetailState = {
@@ -78,6 +95,7 @@ const initialState: PointDetailState = {
   requestId: null,
   period: 'all',
   data: emptyData,
+  forecast: emptyForecast,
 };
 
 type Config = { rejectValue: RequestFailure };
@@ -144,6 +162,23 @@ export const deleteSeries = createAsyncThunk<void, { pointId: string; seriesId: 
     }, rejectWithValue),
 );
 
+/** The forecast of each series: the next 24 hours, or the reason there is none. */
+export const fetchForecasts = createAsyncThunk<
+  Record<string, Forecast>,
+  TimeSeriesSummary[],
+  Config
+>('pointDetail/fetchForecasts', (series, { rejectWithValue }) =>
+  attempt(async () => {
+    const answers = await Promise.all(
+      series.map(async (item) => ({
+        id: item.id,
+        forecast: await getJson<Forecast>(`/time-series/${item.id}/forecast`),
+      })),
+    );
+    return Object.fromEntries(answers.map((answer) => [answer.id, answer.forecast]));
+  }, rejectWithValue),
+);
+
 export const pointDetailSlice = createSlice({
   name: 'pointDetail',
   initialState,
@@ -151,13 +186,20 @@ export const pointDetailSlice = createSlice({
     periodChanged: (state, action: PayloadAction<Period>) => {
       state.period = action.payload;
     },
+    forecastToggled: (state, action: PayloadAction<boolean>) => {
+      state.forecast.shown = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchPointDetail.pending, (state, action) => {
         if (state.pointId !== action.meta.arg) {
           // Another point: nothing of the previous one may show meanwhile.
-          Object.assign(state, initialState, { period: state.period });
+          // The period and the forecast switch are choices of the user, and stay.
+          Object.assign(state, initialState, {
+            period: state.period,
+            forecast: { ...emptyForecast, shown: state.forecast.shown },
+          });
           state.pointId = action.meta.arg;
         }
         state.requestId = action.meta.requestId;
@@ -188,8 +230,23 @@ export const pointDetailSlice = createSlice({
         if (action.meta.requestId !== state.data.requestId) return;
         state.data.status = 'failed';
         state.data.error = action.payload?.message ?? 'Could not load the readings.';
+      })
+      .addCase(fetchForecasts.pending, (state, action) => {
+        state.forecast.requestId = action.meta.requestId;
+        state.forecast.status = 'loading';
+        state.forecast.error = null;
+      })
+      .addCase(fetchForecasts.fulfilled, (state, action) => {
+        if (action.meta.requestId !== state.forecast.requestId) return;
+        state.forecast.status = 'loaded';
+        state.forecast.bySeries = action.payload;
+      })
+      .addCase(fetchForecasts.rejected, (state, action) => {
+        if (action.meta.requestId !== state.forecast.requestId) return;
+        state.forecast.status = 'failed';
+        state.forecast.error = action.payload?.message ?? 'Could not load the forecast.';
       });
   },
 });
 
-export const { periodChanged } = pointDetailSlice.actions;
+export const { periodChanged, forecastToggled } = pointDetailSlice.actions;

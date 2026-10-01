@@ -1,5 +1,7 @@
 import {
+  FORECAST,
   locationLabel,
+  type Forecast,
   type SeriesMetrics,
   type TimeSeriesSummary,
 } from '@condition-monitor/shared';
@@ -8,10 +10,12 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -27,8 +31,10 @@ import { ConfirmDialog } from '../../components/confirm-dialog';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   deleteSeries,
+  fetchForecasts,
   fetchPointDetail,
   fetchSeriesData,
+  forecastToggled,
   periodChanged,
   PERIODS,
   type Period,
@@ -51,6 +57,60 @@ function byQuantity(series: TimeSeriesSummary[]): TimeSeriesSummary[][] {
   return [...groups.values()];
 }
 
+const available = (forecast: Forecast | undefined) =>
+  forecast?.status === 'available' ? forecast : undefined;
+
+/**
+ * What each forecast is worth, in words: how far it was from what happened on history it
+ * had not seen, beside the error of simply repeating yesterday. A forecast that is not
+ * better than that is said to be so, and a series without one says why.
+ */
+function ForecastNotes({
+  series,
+  forecasts,
+  title,
+}: {
+  series: TimeSeriesSummary[];
+  forecasts: Record<string, Forecast>;
+  title: string;
+}) {
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography variant="body2" color="text.secondary">
+        Dashed: the hourly mean expected. Shaded: where {Math.round(FORECAST.bandCoverage * 100)} %
+        of the forecasts of this series fell when tried on its own history.
+      </Typography>
+      <Box component="ul" aria-label={`${title} forecast`} sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+        {series.map((item) => {
+          const forecast = forecasts[item.id];
+          if (!forecast) return null;
+          if (forecast.status === 'unavailable') {
+            return (
+              <Typography component="li" variant="body2" key={item.id}>
+                {item.label}: no forecast. {forecast.detail}
+              </Typography>
+            );
+          }
+          const { error, baselineError } = forecast.validation;
+          const better = error < baselineError;
+          return (
+            <Typography
+              component="li"
+              variant="body2"
+              key={item.id}
+              color={better ? 'text.primary' : 'warning.main'}
+            >
+              {item.label}: missed by {measured(error)} {item.unit} on average;{' '}
+              {"repeating yesterday's hour"} misses by {measured(baselineError)} {item.unit}.
+              {!better && ' Not better than repeating yesterday: do not rely on it.'}
+            </Typography>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
 const METRIC_COLUMNS: { key: keyof SeriesMetrics; label: string }[] = [
   { key: 'min', label: 'Min' },
   { key: 'max', label: 'Max' },
@@ -66,7 +126,7 @@ const METRIC_COLUMNS: { key: keyof SeriesMetrics; label: string }[] = [
 export function PointDetailPage() {
   const { id = '' } = useParams();
   const dispatch = useAppDispatch();
-  const { point, series, status, error, period, data } = useAppSelector(
+  const { point, series, status, error, period, data, forecast } = useAppSelector(
     (state) => state.pointDetail,
   );
   const [deleting, setDeleting] = useState<TimeSeriesSummary | null>(null);
@@ -81,6 +141,13 @@ export function PointDetailPage() {
       void dispatch(fetchSeriesData({ series, period }));
     }
   }, [dispatch, status, series, period]);
+
+  // Forecasts are asked for only while shown, and again when the series change.
+  useEffect(() => {
+    if (forecast.shown && status === 'loaded' && series.length > 0) {
+      void dispatch(fetchForecasts(series));
+    }
+  }, [dispatch, forecast.shown, status, series]);
 
   if (status === 'failed') {
     return (
@@ -156,7 +223,23 @@ export function PointDetailPage() {
                 Ending at the latest reading of the point.
               </Typography>
             )}
+            <FormControlLabel
+              sx={{ ml: 'auto' }}
+              label={`Forecast the next ${FORECAST.horizonHours} h`}
+              control={
+                <Switch
+                  checked={forecast.shown}
+                  onChange={(_event, checked) => dispatch(forecastToggled(checked))}
+                />
+              }
+            />
           </Stack>
+
+          {forecast.shown && forecast.status === 'failed' && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {forecast.error}
+            </Alert>
+          )}
 
           {data.status === 'failed' && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -181,12 +264,16 @@ export function PointDetailPage() {
                       label: item.label,
                       axis: item.axis,
                       answer: data.readings[item.id],
+                      forecast: forecast.shown ? available(forecast.bySeries[item.id]) : undefined,
                     }))}
                   />
                 ) : (
                   <Box sx={{ height: 280, display: 'grid', placeItems: 'center' }}>
                     <CircularProgress aria-label={`Loading ${title}`} />
                   </Box>
+                )}
+                {forecast.shown && forecast.status === 'loaded' && (
+                  <ForecastNotes series={group} forecasts={forecast.bySeries} title={title} />
                 )}
                 {downsampled && (
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

@@ -261,6 +261,80 @@ describe('monitoring point page', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
+  describe('forecast', () => {
+    const forecast = (error: number, baselineError: number) => ({
+      status: 'available',
+      basedOn: { from: '2026-09-18T00:00:00.000Z', to: '2026-09-29T00:00:00.000Z', hours: 264 },
+      validation: { forecasts: 30, error, baselineError },
+      points: Array.from({ length: 24 }, (_, hour) => ({
+        timestamp: new Date(Date.UTC(2026, 8, 29, hour, 30)).toISOString(),
+        value: 2,
+        lower: 1.8,
+        upper: 2.2,
+      })),
+    });
+
+    const forecastRoutes = {
+      'GET /api/time-series/vh/forecast': () => Response.json(forecast(0.055, 0.077)),
+      'GET /api/time-series/vv/forecast': () => Response.json(forecast(0.09, 0.08)),
+      'GET /api/time-series/t/forecast': () =>
+        Response.json({
+          status: 'unavailable',
+          reason: 'not-enough-history',
+          detail: 'The series has 47 hours of continuous history; a forecast needs 168.',
+        }),
+    };
+
+    it('is not asked for until the switch is turned on', async () => {
+      const { calls } = mockApi({ ...base, ...pointRoutes, ...dataRoutes() });
+      renderApp('/monitoring-points/p1');
+      await screen.findByRole('img', { name: 'Temperature chart, in °C' });
+
+      expect(calls.some((call) => call.path.endsWith('/forecast'))).toBe(false);
+      expect(screen.getByRole('checkbox', { name: 'Forecast the next 24 h' })).not.toBeChecked();
+    });
+
+    it('adds the dashed line and its band to the chart, and says what the forecast is worth', async () => {
+      mockApi({ ...base, ...pointRoutes, ...dataRoutes(), ...forecastRoutes });
+      renderApp('/monitoring-points/p1');
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Forecast the next 24 h' }));
+
+      const notes = await screen.findByRole('list', { name: 'Velocity RMS forecast' });
+      expect(screen.getByRole('img', { name: 'Velocity RMS chart, in mm/s' })).toHaveTextContent(
+        'Velocity RMS, horizontal, forecast: 24',
+      );
+      expect(within(notes).getAllByRole('listitem')[0]).toHaveTextContent(
+        "Velocity RMS, horizontal: missed by 0.055 mm/s on average; repeating yesterday's hour misses by 0.077 mm/s.",
+      );
+    });
+
+    it('warns when a forecast is not better than repeating yesterday', async () => {
+      mockApi({ ...base, ...pointRoutes, ...dataRoutes(), ...forecastRoutes });
+      renderApp('/monitoring-points/p1');
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Forecast the next 24 h' }));
+
+      const notes = await screen.findByRole('list', { name: 'Velocity RMS forecast' });
+      expect(within(notes).getAllByRole('listitem')[1]).toHaveTextContent(
+        'Not better than repeating yesterday: do not rely on it.',
+      );
+      expect(within(notes).getAllByRole('listitem')[0]).not.toHaveTextContent('Not better');
+    });
+
+    it('says why a series has no forecast, and draws none for it', async () => {
+      mockApi({ ...base, ...pointRoutes, ...dataRoutes(), ...forecastRoutes });
+      renderApp('/monitoring-points/p1');
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Forecast the next 24 h' }));
+
+      const notes = await screen.findByRole('list', { name: 'Temperature forecast' });
+      expect(notes).toHaveTextContent(
+        'Temperature: no forecast. The series has 47 hours of continuous history; a forecast needs 168.',
+      );
+      expect(screen.getByRole('img', { name: 'Temperature chart, in °C' })).toHaveTextContent(
+        /^Temperature: 2$/,
+      );
+    });
+  });
+
   it('opens from the point name on the machine page', async () => {
     mockApi({
       ...base,
