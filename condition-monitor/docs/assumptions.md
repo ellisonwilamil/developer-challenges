@@ -174,11 +174,13 @@ vibration; computing in the database keeps the latency budget.
 **C7. Empty series.** Metrics come back as `null`, with a count of zero. Null means
 "unknown"; zero would claim a measurement that never happened.
 
-**C8. Size limits.** Each submission accepts up to 10,000 readings, and each series up
-to 50,000, about one year at the 10-minute interval. The series limit is an estimate
-from that interval, to be confirmed by the load test. The limits are explicit, and the
+**C8. Size limits.** Each submission accepts up to 2,000 readings, and each series up
+to 50,000, about one year at the 10-minute interval. The limits are explicit, and the
 error states which one was exceeded. They are what makes the latency target a promise
-rather than a hope.
+rather than a hope, and both were put to the load test ([performance](performance.md)):
+a submission of 10,000 readings, the first limit, took over a second to store, one of
+5,000 still took longer than 350 ms, and one of 2,000 does not; series at their limit
+of 50,000 are read within the target. A larger file is split by the user.
 
 **C9. What a sensor sends.** The three sensor models measure triaxial vibration and
 temperature. The time-series stored here are telemetry: scalar values over time.
@@ -246,7 +248,7 @@ reproduces the same values: running a backfill twice inserts nothing new.
   `SIMULATOR_PASSWORD` from the environment, never from the command line, which the
   shell history keeps. A session lasts one hour, so an answer `401` leads to one new
   login and one retry.
-- **Limits.** Submissions hold at most 10,000 readings (C8). A backfill is limited by the
+- **Limits.** Submissions hold at most 2,000 readings (C8). A backfill is limited by the
   50,000 readings of a series: 347 days at 10 minutes, more at a longer interval.
 - **Failures.** A serial number asked for that is not installed stops the command with
   its name. A backfill that finds no sensor fails, since ending without data is not a
@@ -258,7 +260,11 @@ reproduces the same values: running a backfill twice inserts nothing new.
 
 **D1. Latency below 350 ms.** Measured as API response time in a local environment,
 with data volumes produced by the simulator, through a load test. Every published
-number states how it was obtained.
+number states how it was obtained. "All requests" is read as the 99th percentile of
+each route: the 95th would leave one request in twenty out, and the maximum would fail
+on a single pause that says nothing about the system. The maximum is published beside
+it. The method, the numbers and what they changed are in
+[performance](performance.md).
 
 **D2. Unit tests.** Business rules are unit tested on both frontend and backend, and
 the API has integration tests against a real database. The `Pump` rule is tested to

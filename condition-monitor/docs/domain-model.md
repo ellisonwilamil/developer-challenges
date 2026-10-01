@@ -68,6 +68,7 @@ erDiagram
         uuid monitoringPointId FK
         enum quantity "ACCELERATION_RMS, VELOCITY_RMS or TEMPERATURE"
         enum axis "H, V, A, or empty for temperature"
+        int readingCount "kept by triggers"
     }
     Reading {
         uuid seriesId PK,FK
@@ -101,6 +102,8 @@ for no answer.
 | Serial number is 3 to 40 uppercase letters, digits or hyphens | `CHECK` on `sensors.serial_number` | B4 |
 | No `TcAg` or `TcAs` sensor on a pump | `CHECK` on `Sensor`, see below | B15 |
 | One series per point, quantity and axis | unique index on `(monitoringPointId, quantity, axis) NULLS NOT DISTINCT` | C1 |
+| A series knows how many readings it holds | triggers on `readings`, see "Reading count" | C8 |
+| A reading count is never negative | `CHECK (reading_count >= 0)` | C8 |
 | Temperature has no axis; vibration has one | `CHECK ((quantity = 'TEMPERATURE') = (axis IS NULL))` | C10 |
 | One reading per series and timestamp | primary key `(seriesId, timestamp)` | C5 |
 | Reading value is finite | `CHECK` rejecting `NaN`, `Infinity` and `-Infinity` | C4 |
@@ -151,6 +154,31 @@ A trigger could express the same rules. It was not chosen for three reasons:
 
 The cost is one duplicated column per table and `CHECK` constraints written in SQL in
 the migrations, since Prisma does not model them.
+
+## Reading count
+
+`TimeSeries.readingCount` is the one stored value that could be computed: the number of
+readings of the series. It is stored because computing it was measured as too slow. The
+overview counted 2.7 million rows on every visit, about 410 ms on its own, and each
+submission counted the readings of its series to check the limit of 50,000
+([performance](performance.md)).
+
+Two triggers on `Reading` keep it, one after inserts and one after deletes. Each runs
+once per statement, over the rows that statement really changed, and adds or subtracts
+their number per series. So the count is right whoever writes: the API, `psql` or a
+test. A reading skipped as already stored (`ON CONFLICT DO NOTHING`) is not counted,
+and a statement that fails leaves the count as it was.
+
+The section above rejects a trigger, and this one uses two; the difference is what the
+trigger reads. There, it would read another table without locking it, and two
+concurrent transactions would each see the old state and both commit. Here, the trigger
+updates the series row, `reading_count = reading_count + n`, which locks it: concurrent
+increments queue instead of being lost. The API already locks the series of a
+submission in id order before inserting, so the trigger meets rows its transaction
+holds and cannot deadlock with another submission.
+
+The cost is a rule that lives only in migration SQL, and integration tests that prove
+the count follows inserts and deletes made directly in the database.
 
 ## Derived, not stored
 

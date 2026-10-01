@@ -24,7 +24,7 @@ tests and screen:
 | Monitoring points and sensors | done: positions per machine type, one sensor per point, pump rule, the paginated list sortable by every column |
 | Time-series | done: readings from CSV or JSON, metrics, full retrieval, deletion, the count on the overview, charts per monitoring point |
 | Simulator | done: backfill and live telemetry for the installed sensors, through the API |
-| Latency measurement | next |
+| Latency measurement | done: every route answers 99 % of its requests below 350 ms under load, measured with 2.7 million readings |
 
 ## Stack
 
@@ -140,9 +140,8 @@ npm run simulate -- live
 - It exits with 0 when done, 1 when it could not send (API unreachable, login refused,
   no sensor installed, a serial number not installed), and 2 for a wrong command line.
 
-A 30-day backfill of two sensors, 60,480 readings, took 4.8 s on the development
-machine, and running it again 2.7 s (measured once each with `date` around the command;
-not a benchmark).
+In the load test setup, the 30-day backfill of 80 sensors, 2,419,200 readings, took
+190 s on the development machine (measured once, from the timestamps the setup prints).
 
 ## Assumptions
 
@@ -154,6 +153,7 @@ taken in [docs/assumptions.md](docs/assumptions.md).
 Entities, relations and database rules in [docs/domain-model.md](docs/domain-model.md).
 Components, workspace layout and data flows in [docs/architecture.md](docs/architecture.md).
 REST endpoints, payloads and error format in [docs/api-contract.md](docs/api-contract.md).
+Latency measurements, their method and what they changed in [docs/performance.md](docs/performance.md).
 
 ## Changing the database schema
 
@@ -183,6 +183,27 @@ not used, since it would drop those hand-written rules
 Integration tests always use `DATABASE_URL_TEST`, never the development database
 ([ADR 0010](docs/adr/0010-testing-strategy.md)).
 
+### Load test
+
+The challenge asks for a latency below 350 ms for all requests. It is measured with k6
+over 80 sensors and 2.7 million readings produced by the simulator, against the
+production build of the API and a database of its own:
+
+```bash
+npm run load:setup
+```
+
+```bash
+npm run load:test
+```
+
+The setup takes about four minutes and the test about three. They need Docker, port
+3100 free, and pull the image `grafana/k6:2.3.0` (111 MB) on the first run. The test
+exits with an error when a route has its 99th percentile above 350 ms. The result, on
+the development machine: all 30 routes within the limit, the slowest being the CSV
+import at 321 ms and the largest submission of readings at 314 ms. Method, full table and limits of what it proves in
+[docs/performance.md](docs/performance.md).
+
 ### Continuous integration
 
 [`.github/workflows/condition-monitor.yml`](../.github/workflows/condition-monitor.yml)
@@ -196,8 +217,9 @@ which is why the file lives there.
 ### Dependency audit
 
 `npm audit` reports advisories in seven packages, all third-party and none in this
-project's code. Measured on 2026-09-30 with `npm audit` after `npm ci`, and again after
-the chart libraries were added, which brought no advisory of their own:
+project's code. Measured on 2026-09-30 with `npm audit` after `npm ci`, again after the
+chart libraries were added, and on 2026-10-01 after `bcrypt` replaced `bcryptjs`;
+neither change brought an advisory of its own:
 
 | Package | Pulled in by | Why this project is not exposed |
 |---|---|---|

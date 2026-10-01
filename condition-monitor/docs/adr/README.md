@@ -15,3 +15,4 @@ consequences accepted.
 | [0008](0008-jwt-cookie-authentication.md) | JWT in an httpOnly cookie, private by default |
 | [0009](0009-chartjs-time-series.md) | Chart.js for time-series charts |
 | [0010](0010-testing-strategy.md) | Testing strategy |
+| [0011](0011-k6-load-tests.md) | k6 in Docker for load tests |

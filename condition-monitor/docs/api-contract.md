@@ -74,7 +74,7 @@ The detail counts invalid readings or lines, not messages. At most 100 errors ar
 listed; when there are more, the detail says so, and the count still covers them all.
 A file refused as a whole, before any line is judged, has one error on the field
 `file` and no line: not UTF-8, semicolons as separator, a header with a missing,
-repeated or unknown column, no readings, or more than 10,000.
+repeated or unknown column, no readings, or more than 2,000.
 
 A conflict lists the records involved:
 
@@ -362,7 +362,7 @@ without readings is left out, so a gap in the data stays a gap.
 ## Readings input
 
 Two entry points, one validation (C3). Both are all or nothing (C4), accept up to
-10,000 readings per submission, and refuse readings that would take a series beyond
+2,000 readings per submission, and refuse readings that would take a series beyond
 50,000 readings (C8).
 
 | Route | Request | Success | Errors |
