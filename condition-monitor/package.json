@@ -19,7 +19,8 @@
     "simulate": "nx run simulator:build && node apps/simulator/dist/main.js",
     "db:seed": "nx run api:prisma-seed",
     "load:setup": "node load-tests/setup.mjs",
-    "load:test": "node load-tests/run.mjs"
+    "load:test": "node load-tests/run.mjs",
+    "e2e": "node apps/web-e2e/run.mjs"
   },
   "workspaces": [
     "apps/*",
@@ -29,6 +30,7 @@
     "@eslint/js": "9.39.5",
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.2.6",
+    "@nx/cypress": "23.2.1",
     "@nx/esbuild": "23.2.1",
     "@nx/eslint": "23.2.1",
     "@nx/eslint-plugin": "23.2.1",
@@ -58,6 +60,7 @@
     "@vitejs/plugin-react": "6.1.1",
     "@vitest/coverage-v8": "4.1.11",
     "@vitest/ui": "4.1.11",
+    "cypress": "15.21.1",
     "esbuild": "0.27.7",
     "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
