@@ -45,9 +45,16 @@ const R = {
   readings: 'GET /api/time-series/:id/readings',
   deleteSeries: 'DELETE /api/time-series/:id',
   ingest: 'POST /api/readings (14 readings)',
-  ingestBulk: 'POST /api/readings (4998 readings)',
+  ingestBulk: '',
   importCsv: 'POST /api/imports (1008 lines)',
 };
+
+/**
+ * Instants of the largest submission, 7 readings each. The default is the most the API
+ * accepts (C8); another size can be given to see how latency follows it.
+ */
+const BULK_INSTANTS = Number(__ENV.BULK_INSTANTS || 714);
+R.ingestBulk = `POST /api/readings (${BULK_INSTANTS * 7} readings)`;
 
 const measured = { phase: 'measure' };
 
@@ -314,8 +321,10 @@ function readingsAt(serialNumber, instants) {
 }
 
 /**
- * Each writer uses instants of its own year, far from the simulated history, and each
- * iteration new ones, so no submission repeats or conflicts with another.
+ * Each writer uses instants of its own year, after the simulated history, and each
+ * iteration new ones, so no submission repeats or conflicts with another. The runner
+ * deletes these readings before a run: a reading sent again is only counted, which is
+ * cheaper than storing it, and would make a second run look faster than it is.
  */
 const YEAR = {
   ingest: Date.UTC(2027, 0, 1),
@@ -354,13 +363,13 @@ export function importCsv(data) {
   check(response, { [`${R.importCsv} answers 200`]: (r) => r.status === 200 });
 }
 
-/** The largest submission: 714 instants of 7 series, just under 5,000 readings (C8). */
+/** The largest submission, on instants no other iteration uses. */
 export function ingestBulk(data) {
   ensureSession(session);
   const n = exec.scenario.iterationInTest;
   const serialNumber = data.writable[n % data.writable.length];
-  const start = YEAR.bulk + Math.floor(n / data.writable.length) * 714 * 10 * MINUTE;
-  const instants = Array.from({ length: 714 }, (_, index) => start + index * 10 * MINUTE);
+  const start = YEAR.bulk + Math.floor(n / data.writable.length) * BULK_INSTANTS * 10 * MINUTE;
+  const instants = Array.from({ length: BULK_INSTANTS }, (_, index) => start + index * 10 * MINUTE);
   call('POST', '/readings', R.ingestBulk, { readings: readingsAt(serialNumber, instants) });
 }
 

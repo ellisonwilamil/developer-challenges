@@ -31,8 +31,11 @@ export function run(command, args, options = {}) {
   execFileSync(command, args, { stdio: 'inherit', env: loadEnv, ...options });
 }
 
-/** Runs SQL as the database owner, inside the PostgreSQL container of docker-compose.yml. */
-export function psql(sql) {
+/**
+ * Runs SQL as the database owner, inside the PostgreSQL container of docker-compose.yml:
+ * on the maintenance database by default, or on the one given.
+ */
+export function psql(sql, database = 'postgres') {
   run('docker', [
     'compose',
     'exec',
@@ -42,7 +45,7 @@ export function psql(sql) {
     '-U',
     user,
     '-d',
-    'postgres',
+    database,
     '-v',
     'ON_ERROR_STOP=1',
     '-c',

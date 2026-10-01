@@ -5,13 +5,19 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { userInfo } from 'node:os';
-import { LOAD_API, log, run, startApi, stopApi } from './lib.mjs';
+import { LOAD_API, LOAD_DATABASE, log, psql, run, startApi, stopApi } from './lib.mjs';
 
 /** Pinned, so a measurement can be repeated with the same tool. */
 const K6_IMAGE = 'grafana/k6:2.3.0';
 
 const scripts = resolve('load-tests');
 mkdirSync(resolve(scripts, 'results'), { recursive: true });
+
+// Every run starts from the same data. The simulated history ends in 2026; what earlier
+// runs wrote is later than that. Left in place, the same readings sent again would only
+// be counted as repeated, and the run would measure that instead of storing them.
+log('Removing the readings written by earlier runs.');
+psql("DELETE FROM readings WHERE timestamp >= '2027-01-01'", LOAD_DATABASE);
 
 log('Building the API for production.');
 run('npx', ['nx', 'run', 'api:build', '--configuration=production']);
@@ -38,6 +44,8 @@ try {
       `EMAIL=${process.env.SEED_USER_EMAIL}`,
       '-e',
       `PASSWORD=${process.env.SEED_USER_PASSWORD}`,
+      '-e',
+      `BULK_INSTANTS=${process.env.BULK_INSTANTS ?? ''}`,
       K6_IMAGE,
       'run',
       '--quiet',
