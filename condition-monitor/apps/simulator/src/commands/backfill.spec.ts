@@ -30,7 +30,7 @@ function setup(sensors = [fan, pump]) {
 }
 
 describe('backfill', () => {
-  it('sends every series of every sensor, in submissions of at most 10,000 readings', async () => {
+  it('sends every series of every sensor, in submissions within the limit of readings', async () => {
     const { api, client, out, info } = setup();
 
     const code = await backfill(command(), { client, now: NOW, out });

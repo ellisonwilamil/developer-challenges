@@ -45,7 +45,7 @@ const R = {
   readings: 'GET /api/time-series/:id/readings',
   deleteSeries: 'DELETE /api/time-series/:id',
   ingest: 'POST /api/readings (14 readings)',
-  ingestBulk: 'POST /api/readings (9996 readings)',
+  ingestBulk: 'POST /api/readings (4998 readings)',
   importCsv: 'POST /api/imports (1008 lines)',
 };
 
@@ -354,13 +354,13 @@ export function importCsv(data) {
   check(response, { [`${R.importCsv} answers 200`]: (r) => r.status === 200 });
 }
 
-/** The largest submission: 1,428 instants of 7 series, just under 10,000 readings (C8). */
+/** The largest submission: 714 instants of 7 series, just under 5,000 readings (C8). */
 export function ingestBulk(data) {
   ensureSession(session);
   const n = exec.scenario.iterationInTest;
   const serialNumber = data.writable[n % data.writable.length];
-  const start = YEAR.bulk + Math.floor(n / data.writable.length) * 1428 * 10 * MINUTE;
-  const instants = Array.from({ length: 1428 }, (_, index) => start + index * 10 * MINUTE);
+  const start = YEAR.bulk + Math.floor(n / data.writable.length) * 714 * 10 * MINUTE;
+  const instants = Array.from({ length: 714 }, (_, index) => start + index * 10 * MINUTE);
   call('POST', '/readings', R.ingestBulk, { readings: readingsAt(serialNumber, instants) });
 }
 

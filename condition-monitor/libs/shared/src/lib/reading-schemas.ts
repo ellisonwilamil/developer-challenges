@@ -2,8 +2,12 @@ import { z } from 'zod';
 import { AXES, isAxisValidFor, QUANTITY_CODES, type Axis, type Quantity } from './quantity.js';
 import { serialNumberSchema } from './point-schemas.js';
 
-/** Readings accepted in one submission, JSON or CSV (assumption C8). */
-export const MAX_READINGS_PER_SUBMISSION = 10_000;
+/**
+ * Readings accepted in one submission, JSON or CSV (assumption C8). The number comes from
+ * the load test: a submission of this size is stored within the 350 ms latency limit,
+ * and one of 10,000 is not (docs/performance.md).
+ */
+export const MAX_READINGS_PER_SUBMISSION = 5_000;
 
 /** Size of a CSV upload; the API answers 413 above it, the interface checks it first. */
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;

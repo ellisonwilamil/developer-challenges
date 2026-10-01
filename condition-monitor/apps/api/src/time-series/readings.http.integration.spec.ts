@@ -272,15 +272,20 @@ describe('readings over HTTP', () => {
     expect(await readingCount()).toBe(50_000);
   });
 
-  it('accepts 10,000 readings in one submission, a body of more than 1 MB', async () => {
-    const readings = Array.from({ length: 10_000 }, (_, n) =>
+  it('accepts 5,000 readings in one submission, a body above the default of Express, and refuses 5,001', async () => {
+    const readings = Array.from({ length: 5_001 }, (_, n) =>
       reading('DX-0001', { timestamp: new Date(Date.parse(T0) + n * 600_000).toISOString() }),
     );
 
-    const response = await send(readings);
+    const atLimit = await send(readings.slice(0, 5_000));
+    const over = await send(readings);
 
-    expect(response.status).toBe(200);
-    expect(await readingCount()).toBe(10_000);
+    expect(atLimit.status).toBe(200);
+    expect(over.status).toBe(422);
+    expect((await readJson<ErrorBody>(over)).errors).toEqual([
+      { field: 'readings', message: 'At most 5,000 readings per submission.' },
+    ]);
+    expect(await readingCount()).toBe(5_000);
   });
 
   it('refuses a body over 2 MB with 413', async () => {

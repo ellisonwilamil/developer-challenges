@@ -12,7 +12,7 @@ export interface Output {
   error(line: string): void;
 }
 
-/** Instants per submission, so each one stays within 10,000 readings (C8). */
+/** Instants per submission, so each one stays within the limit of readings (C8). */
 export const INSTANTS_PER_BATCH = Math.floor(MAX_READINGS_PER_SUBMISSION / SERIES.length);
 
 export const count = (value: number) => value.toLocaleString('en-US');
