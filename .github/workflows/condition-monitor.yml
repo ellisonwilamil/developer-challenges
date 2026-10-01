@@ -101,6 +101,9 @@ jobs:
 
     env:
       NX_NO_CLOUD: 'true'
+      # Prisma reads this when it generates the client, before the run script sets its own
+      # for the e2e database (the same value). Without it, `prisma generate` fails.
+      DATABASE_URL: postgresql://condition_monitor:condition_monitor@localhost:5432/condition_monitor_e2e
       # The run script builds the database URL from these and localhost:5432.
       POSTGRES_USER: condition_monitor
       POSTGRES_PASSWORD: condition_monitor
