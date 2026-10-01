@@ -48,6 +48,9 @@ jobs:
       DATABASE_URL: postgresql://condition_monitor:condition_monitor@localhost:5432/condition_monitor_test
       DATABASE_URL_TEST: postgresql://condition_monitor:condition_monitor@localhost:5432/condition_monitor_test
       NX_NO_CLOUD: 'true'
+      # This job lints, type-checks, tests and builds; it does not run Cypress, so the
+      # Cypress binary (a large Electron download) is not fetched. The e2e job fetches it.
+      CYPRESS_INSTALL_BINARY: '0'
 
     steps:
       - uses: actions/checkout@v7
