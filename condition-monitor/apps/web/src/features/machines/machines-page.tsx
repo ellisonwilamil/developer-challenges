@@ -19,15 +19,14 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchSectors } from '../sectors/sectors-slice';
 import { MachineFormDialog } from './machine-form-dialog';
@@ -40,7 +39,7 @@ import {
   type MachinesQuery,
 } from './machines-slice';
 
-const COLUMNS: { key: MachineSortKey; label: string }[] = [
+const COLUMNS: SortableColumn<MachineSortKey>[] = [
   { key: 'tag', label: 'Tag' },
   { key: 'name', label: 'Name' },
   { key: 'type', label: 'Type' },
@@ -66,13 +65,6 @@ export function MachinesPage() {
     // Loads once per visit; later changes go through `load`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
-
-  const sort = (key: MachineSortKey) =>
-    void load({
-      sort: key,
-      order: query.sort === key && query.order === 'asc' ? 'desc' : 'asc',
-      page: 1,
-    });
 
   const suggestNumber = useCallback(
     async (sectorId: string, type: MachineType) => {
@@ -188,25 +180,14 @@ export function MachinesPage() {
         <Paper>
           <TableContainer>
             <Table aria-label="Machines">
-              <TableHead>
-                <TableRow>
-                  {COLUMNS.map((column) => (
-                    <TableCell
-                      key={column.key}
-                      sortDirection={query.sort === column.key ? query.order : false}
-                    >
-                      <TableSortLabel
-                        active={query.sort === column.key}
-                        direction={query.sort === column.key ? query.order : 'asc'}
-                        onClick={() => sort(column.key)}
-                      >
-                        {column.label}
-                      </TableSortLabel>
-                    </TableCell>
-                  ))}
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
+              <SortableTableHead
+                columns={COLUMNS}
+                sort={query.sort}
+                order={query.order}
+                onSort={(sort, order) => void load({ sort, order, page: 1 })}
+              >
+                <TableCell align="right">Actions</TableCell>
+              </SortableTableHead>
               <TableBody>
                 {page.items.map((machine) => (
                   <TableRow key={machine.id} hover>

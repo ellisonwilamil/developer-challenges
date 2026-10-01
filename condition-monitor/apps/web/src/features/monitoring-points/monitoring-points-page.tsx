@@ -9,18 +9,17 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router';
+import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchPoints, type PointsQuery } from './monitoring-points-slice';
 
 /** The four columns the challenge requires first, then the tag and the position. */
-const COLUMNS: { key: PointSortKey; label: string }[] = [
+const COLUMNS: SortableColumn<PointSortKey>[] = [
   { key: 'machineName', label: 'Machine Name' },
   { key: 'machineType', label: 'Machine Type' },
   { key: 'monitoringPointName', label: 'Monitoring Point Name' },
@@ -49,13 +48,6 @@ export function MonitoringPointsPage() {
     // Loads once per visit; later changes go through `load`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
-
-  const sort = (key: PointSortKey) =>
-    void load({
-      sort: key,
-      order: query.sort === key && query.order === 'asc' ? 'desc' : 'asc',
-      page: 1,
-    });
 
   return (
     <>
@@ -95,24 +87,12 @@ export function MonitoringPointsPage() {
         <Paper>
           <TableContainer>
             <Table aria-label="Monitoring points">
-              <TableHead>
-                <TableRow>
-                  {COLUMNS.map((column) => (
-                    <TableCell
-                      key={column.key}
-                      sortDirection={query.sort === column.key ? query.order : false}
-                    >
-                      <TableSortLabel
-                        active={query.sort === column.key}
-                        direction={query.sort === column.key ? query.order : 'asc'}
-                        onClick={() => sort(column.key)}
-                      >
-                        {column.label}
-                      </TableSortLabel>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
+              <SortableTableHead
+                columns={COLUMNS}
+                sort={query.sort}
+                order={query.order}
+                onSort={(sort, order) => void load({ sort, order, page: 1 })}
+              />
               <TableBody>
                 {page.items.map((point) => (
                   <TableRow
