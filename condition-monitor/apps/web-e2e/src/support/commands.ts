@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+import '@testing-library/cypress/add-commands';
 
 /**
  * Logs in through the API and keeps the session cookie for the next `cy.visit`, the fast

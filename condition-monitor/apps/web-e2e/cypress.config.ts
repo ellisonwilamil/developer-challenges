@@ -56,6 +56,8 @@ async function resetDatabase(): Promise<null> {
 export default defineConfig({
   e2e: {
     baseUrl: process.env.E2E_WEB_URL ?? 'http://localhost:4400',
+    viewportWidth: 1280,
+    viewportHeight: 800,
     specPattern: 'src/e2e/**/*.cy.ts',
     supportFile: 'src/support/e2e.ts',
     screenshotsFolder: 'screenshots',
