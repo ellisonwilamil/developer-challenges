@@ -25,6 +25,7 @@ tests and screen:
 | Time-series | done: readings from CSV or JSON, metrics, full retrieval, deletion, the count on the overview, charts per monitoring point |
 | Simulator | done: backfill and live telemetry for the installed sensors, through the API |
 | Latency measurement | done: every route answers 99 % of its requests below 350 ms under load, measured with 2.7 million readings |
+| Forecast (bonus) | done: the next 24 hours of each series, with a measured uncertainty band, on the monitoring point screen |
 
 ## Stack
 
@@ -136,6 +137,8 @@ npm run simulate -- live
   every 10 minutes until stopped with Ctrl+C.
 - `--serial DX-000001` limits it to one sensor, repeatable for several; `--interval`,
   `--seed` and `--api-url` change the defaults. `npm run simulate -- help` lists them.
+- `--degrade DX-000001 --degrade-since 2026-09-01` makes a sensor drift upward from a
+  day, so the forecast has a trend to follow.
 - The same seed gives the same values, so running a backfill again stores nothing new.
 - It exits with 0 when done, 1 when it could not send (API unreachable, login refused,
   no sensor installed, a serial number not installed), and 2 for a wrong command line.

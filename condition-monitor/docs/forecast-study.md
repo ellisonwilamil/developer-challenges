@@ -116,6 +116,8 @@ The forecast route uses the **linear autoregression on hourly means, with a wind
 
 - It is fitted by least squares, a closed formula: the same history always gives the
   same forecast, in milliseconds, with no training to schedule and no model to store.
+  The result is kept in memory until the series changes, so the fit runs once per change,
+  not once per view ([ADR 0012](adr/0012-forecast.md)).
 - It has no dependency, and each of its 49 numbers can be read: the weight of each
   past hour.
 - Its uncertainty is measured the same way as here: the errors at each hour ahead over
@@ -137,7 +139,10 @@ it would repay that: the series are well described by a linear model.
   forecast; the forecast is about the level.
 - **A steady rise is the easy kind of degradation.** A fault that appears suddenly is
   not predicted by any candidate here; that is detection, not forecasting.
-- **24 hours.** Longer horizons were not measured.
+- **24 hours.** Longer horizons were not measured. At this horizon a slow degradation
+  barely moves the forecast: the degrading series rose about 0.05 mm/s per day, less than
+  the daily cycle the model follows, so the forecast answers "how the next day looks",
+  not "when a level is crossed". That longer-horizon question the study did not take on.
 
 ## Running it
 

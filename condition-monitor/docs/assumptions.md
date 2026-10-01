@@ -232,7 +232,10 @@ It runs in two modes: `backfill` sends a history and exits, `live` sends current
 readings at a fixed interval (10 minutes by default). Each sensor produces the seven
 series of C10 (acceleration and velocity on three axes, plus temperature). Values
 follow configurable profiles per machine type, with seeded noise, so the same seed
-reproduces the same values: running a backfill twice inserts nothing new.
+reproduces the same values: running a backfill twice inserts nothing new. The
+`--degrade` option makes a sensor's vibration and temperature rise slowly from a given
+day, so there is a trend to forecast; being deterministic, a repeated run of a degrading
+sensor also stores nothing new.
 
 - **Values.** The profiles in `apps/simulator/src/telemetry/profiles.ts` are synthetic
   levels of a healthy machine, not measurements: a level per quantity and axis, a daily
@@ -284,6 +287,16 @@ synthetic values (a daily cycle plus fixed pseudo-random noise), not measurement
 **E3. Chart period.** The monitoring point screen offers the last 24 hours, 7 days, 30
 days, or all readings. A period ends at the point's latest reading, not at the current
 time: readings imported from last month would otherwise show an empty chart.
+
+**E5. Forecast.** The monitoring point screen can forecast the next 24 hours of each
+series, off by default, drawn as a dashed line with a shaded band and summarised in
+words. The model is a linear autoregression over hourly means, chosen by measurement
+([forecast-study.md](forecast-study.md)). The band is the model's own validation error,
+and the screen states that error beside the baseline's, warning when the model is not
+better. A series without a week of continuous history has no forecast, and the reason is
+shown. The forecast is computed on request and kept in memory until the series gains or
+loses a reading ([ADR 0012](adr/0012-forecast.md)): a forecast changes only when the
+data does.
 
 **E4. Condensed charts.** Above 1,000 readings in a series, the chart receives buckets
 of minimum and maximum (ADR 0009) and draws each as a vertical stroke, so peaks stay

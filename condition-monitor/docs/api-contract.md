@@ -317,6 +317,7 @@ A time-series:
 | `GET /api/time-series/:id/metrics` | query `from?`, `to?` | `200`, metrics | `404`, `422` |
 | `GET /api/time-series/:id/readings` | query `from?`, `to?`, `maxPoints?` | `200`, readings or buckets | `404`, `422` |
 | `DELETE /api/time-series/:id` | none | `204`, the series and its readings | `404` |
+| `GET /api/time-series/:id/forecast` | none | `200`, the forecast or the reason there is none | `404` |
 
 An interval includes both ends, and either end may be left out: without `from` it
 starts at the first reading, without `to` it ends at the last. `to` before `from`
@@ -358,6 +359,34 @@ The buckets have equal widths and span the requested interval, or the first and 
 readings where an end is left out. A bucket holds the readings from its `start` up to,
 not including, its `end`; the last one also holds a reading at its `end`. A bucket
 without readings is left out, so a gap in the data stays a gap.
+
+**Forecast** (challenge, section 8; [forecast-study.md](forecast-study.md)): the next 24
+hours of the series, as hourly means, each with the band it should fall within. The
+answer is `200` whether or not there is a forecast; a series of another user, or an id
+that is not a UUID, is `404`.
+
+```json
+{
+  "status": "available",
+  "basedOn": { "from": "2026-08-30T00:00:00Z", "to": "2026-09-29T00:00:00Z", "hours": 720 },
+  "validation": { "forecasts": 120, "error": 0.05, "baselineError": 0.08 },
+  "points": [{ "timestamp": "2026-09-29T00:30:00Z", "value": 2.11, "lower": 1.98, "upper": 2.24 }]
+}
+```
+
+`validation` is how the model did on the last fifth of the history it did not see,
+against the baseline of repeating the same hour a day earlier, as mean absolute errors
+in the unit of the series: a model with the larger error is not worth trusting over the
+baseline. `lower` and `upper` are the forecast minus and plus the error that 90 % of
+the validation forecasts stayed within at that hour ahead, so the band widens with the
+horizon. A vibration forecast and its lower bound never go below zero.
+
+With less than a week of continuous history up to the latest reading, there is no
+forecast, and the answer says so rather than inventing a line:
+
+```json
+{ "status": "unavailable", "reason": "not-enough-history", "detail": "The series has 47 hours of continuous history up to its latest reading; a forecast needs 168." }
+```
 
 ## Readings input
 

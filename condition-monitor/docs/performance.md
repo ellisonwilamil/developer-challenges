@@ -165,6 +165,29 @@ The runner now deletes what earlier runs wrote, so every run stores its readings
 the sizes above were all measured that way. The table of routes that read or log in is
 not affected by the defect.
 
+## The forecast route under load
+
+The forecast route (challenge bonus) was added to the load test, turned on in half the
+visits to a monitoring point: one forecast request per series of the point, seven at
+once. It is the heaviest read: a fit over a month of hourly means, on the thread that
+serves every request.
+
+- **Without a cache, it missed the target**: a 99th percentile around 440 ms, with the
+  seven fits of a visit landing together. The fit was rewritten to run on typed arrays
+  in a single pass, and a cache was added: a forecast is kept in memory until its series
+  gains or loses a reading, since a forecast changes only when the data does
+  ([ADR 0012](adr/0012-forecast.md)).
+- **With the cache**, over four runs on 2026-10-01, the route's 99th percentile was 86,
+  96, 76 and 84 ms, and its median about 8 ms.
+
+The forecast is not what makes the largest submission and the CSV import sit near the
+limit. A run with the forecast turned nearly off still had the largest submission at a
+99th percentile of 552 ms once: those margins are the laptop's, measured while a browser
+shared its cores, as "What this result does not say" explains. Two of the four runs with
+the forecast on passed all 31 routes; the other two had the largest submission, or the
+import, above 350 ms, as they do without the forecast. The forecast route itself stays
+well within the target.
+
 ## Earlier measurements
 
 - The first number of this stage: `GET /api/overview` alone, with no concurrency, took
