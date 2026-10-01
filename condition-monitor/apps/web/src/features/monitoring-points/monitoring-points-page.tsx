@@ -147,16 +147,14 @@ export function MonitoringPointsPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          {/* A single option hides the page size selector: the challenge fixes 5 per page. */}
           <TablePagination
             component="div"
             count={page.total}
             page={query.page - 1}
             rowsPerPage={query.pageSize}
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[query.pageSize]}
             onPageChange={(_event, zeroBased) => void load({ page: zeroBased + 1 })}
-            onRowsPerPageChange={(event) =>
-              void load({ pageSize: Number(event.target.value), page: 1 })
-            }
           />
         </Paper>
       )}

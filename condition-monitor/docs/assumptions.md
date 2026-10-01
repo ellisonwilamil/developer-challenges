@@ -69,7 +69,8 @@ first either way. Hiding the point would suggest it does not exist.
 **B8. Pagination and sorting.** Pagination and sorting run on the server, 5 items per
 page, by any column, always with a tiebreaker on the primary key so items never skip or
 repeat between pages. Besides the four required columns, the list shows the machine tag
-and the installation position.
+and the installation position. The screen offers no other page size: "up to 5" is read
+as a fixed size, although the API accepts a `pageSize` parameter like every other list.
 
 **B9. Sectors.** A sector is the physical area of the plant where machines are
 installed, with a unique code and a name, in a single level. The seed creates one

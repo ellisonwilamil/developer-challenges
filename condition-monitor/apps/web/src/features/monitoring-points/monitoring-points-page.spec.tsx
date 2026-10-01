@@ -124,6 +124,15 @@ describe('monitoring points page', () => {
     expect(rows().map((row) => row[2])).toEqual(['Inlet']);
   });
 
+  it('offers no other page size than the 5 the challenge asks for', async () => {
+    mockApi({ ...base, [FIRST_PAGE]: () => Response.json(page(points, 7)) });
+    renderApp('/monitoring-points');
+    await screen.findByText(/^1\D5 of 7$/);
+
+    expect(screen.queryByText('Rows per page:')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
   it('opens the point of a row, and the machine from its tag', async () => {
     mockApi({
       ...base,
