@@ -1,6 +1,4 @@
 import { locationLabel, type PointSortKey } from '@condition-monitor/shared';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -12,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -55,11 +54,7 @@ export function MonitoringPointsPage() {
       </Typography>
 
       {status === 'failed' && <RetryAlert message={error} onRetry={() => void load({})} />}
-      {status !== 'failed' && !page && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress aria-label="Loading monitoring points" />
-        </Box>
-      )}
+      {status !== 'failed' && !page && <LoadingIndicator label="Loading monitoring points" />}
       {page && page.total === 0 && status !== 'failed' && (
         <Paper sx={{ p: 3 }}>
           <Typography color="text.secondary">

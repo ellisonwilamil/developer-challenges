@@ -14,7 +14,6 @@ import Box from '@mui/material/Box';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
@@ -29,6 +28,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { MachineFormDialog } from '../machines/machine-form-dialog';
@@ -89,11 +89,7 @@ export function MachineDetailPage() {
     return <RetryAlert message={error} onRetry={() => void dispatch(fetchMachineDetail(id))} />;
   }
   if (!detail || detail.id !== id) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress aria-label="Loading machine" />
-      </Box>
-    );
+    return <LoadingIndicator label="Loading machine" />;
   }
 
   const machineId = detail.id;

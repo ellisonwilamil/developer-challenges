@@ -27,6 +27,7 @@ import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -153,11 +154,7 @@ export function PointDetailPage() {
     return <RetryAlert message={error} onRetry={() => void dispatch(fetchPointDetail(id))} />;
   }
   if (!point || point.id !== id) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress aria-label="Loading monitoring point" />
-      </Box>
-    );
+    return <LoadingIndicator label="Loading monitoring point" />;
   }
 
   const confirmDelete = async () => {

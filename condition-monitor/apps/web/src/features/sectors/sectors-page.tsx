@@ -4,7 +4,6 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -16,6 +15,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { SectorFormDialog } from './sector-form-dialog';
@@ -69,11 +69,7 @@ export function SectorsPage() {
       {status === 'failed' && (
         <RetryAlert message={error} onRetry={() => void dispatch(fetchSectors())} />
       )}
-      {(status === 'idle' || status === 'loading') && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress aria-label="Loading sectors" />
-        </Box>
-      )}
+      {(status === 'idle' || status === 'loading') && <LoadingIndicator label="Loading sectors" />}
       {status === 'loaded' && items.length === 0 && (
         <Paper sx={{ p: 3 }}>
           <Typography color="text.secondary">

@@ -1,7 +1,6 @@
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import { lazy, Suspense, type ReactElement } from 'react';
 import type { RouteObject } from 'react-router';
+import { LoadingIndicator } from '../components/loading-indicator';
 import { ImportPage } from '../features/import/import-page';
 import { MachineDetailPage } from '../features/machine-detail/machine-detail-page';
 import { MachinesPage } from '../features/machines/machines-page';
@@ -24,11 +23,7 @@ const PointDetailPage = lazy(() =>
   })),
 );
 
-const loading = (
-  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-    <CircularProgress aria-label="Loading screen" />
-  </Box>
-);
+const loading = <LoadingIndicator label="Loading screen" />;
 
 /** The screen of each menu entry; the type makes a missing one a compile error. */
 const SCREENS: Record<(typeof NAVIGATION)[number]['path'], ReactElement> = {

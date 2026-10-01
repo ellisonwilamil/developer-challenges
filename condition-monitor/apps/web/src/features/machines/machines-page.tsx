@@ -10,7 +10,6 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -26,6 +25,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -154,11 +154,7 @@ export function MachinesPage() {
         </Alert>
       )}
       {status === 'failed' && <RetryAlert message={error} onRetry={() => void load({})} />}
-      {status !== 'failed' && !page && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress aria-label="Loading machines" />
-        </Box>
-      )}
+      {status !== 'failed' && !page && <LoadingIndicator label="Loading machines" />}
       {page && page.total === 0 && status !== 'failed' && !noSectors && (
         <Paper sx={{ p: 3 }}>
           <Typography color="text.secondary">

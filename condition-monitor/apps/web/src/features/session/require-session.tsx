@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
+import { LoadingIndicator } from '../../components/loading-indicator';
 import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchSession } from './session-slice';
@@ -35,9 +35,5 @@ export function RequireSession() {
       </Box>
     );
   }
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-      <CircularProgress aria-label="Checking the session" />
-    </Box>
-  );
+  return <LoadingIndicator label="Checking the session" />;
 }
