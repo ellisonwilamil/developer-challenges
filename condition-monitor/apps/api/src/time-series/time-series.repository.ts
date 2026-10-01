@@ -67,16 +67,19 @@ export class TimeSeriesRepository {
     return count > 0;
   }
 
-  /** The series of a point, by quantity then axis, in the order the enums declare. */
+  /**
+   * The series of a point, by quantity then axis, in the order the enums declare. The
+   * count is the one each series keeps; the first and last instants are the two ends of
+   * the primary key index, so no reading is scanned.
+   */
   listOfPoint(pointId: string): Promise<SeriesRow[]> {
     return this.prisma.$queryRaw<SeriesRow[]>`
       SELECT t.id, t.monitoring_point_id AS "monitoringPointId", t.quantity::text AS quantity,
-             t.axis::text AS axis, count(r.timestamp)::int AS "readingCount",
-             min(r.timestamp) AS "firstTimestamp", max(r.timestamp) AS "lastTimestamp"
+             t.axis::text AS axis, t.reading_count AS "readingCount",
+             (SELECT min(timestamp) FROM readings WHERE series_id = t.id) AS "firstTimestamp",
+             (SELECT max(timestamp) FROM readings WHERE series_id = t.id) AS "lastTimestamp"
       FROM time_series t
-      LEFT JOIN readings r ON r.series_id = t.id
       WHERE t.monitoring_point_id = ${pointId}::uuid
-      GROUP BY t.id
       ORDER BY t.quantity, t.axis NULLS LAST, t.id`;
   }
 

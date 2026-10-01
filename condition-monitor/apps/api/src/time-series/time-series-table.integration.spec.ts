@@ -179,4 +179,68 @@ describe('time-series and readings tables', () => {
       expect(await prisma.reading.count()).toBe(0);
     });
   });
+
+  describe('reading count, kept by triggers', () => {
+    let velocity: string;
+    let temperature: string;
+
+    const countOf = async (id: string) =>
+      (await prisma.timeSeries.findUniqueOrThrow({ where: { id } })).readingCount;
+
+    beforeEach(async () => {
+      velocity = await series(point, 'VELOCITY_RMS', 'H');
+      temperature = await series(point, 'TEMPERATURE', null);
+    });
+
+    it('starts at zero and follows inserts on several series in one statement', async () => {
+      expect(await countOf(velocity)).toBe(0);
+
+      await prisma.$executeRaw`
+        INSERT INTO readings (series_id, timestamp, value)
+        SELECT s.id, '2026-09-29T10:00:00Z'::timestamptz + n * interval '10 minutes', 1
+        FROM generate_series(1, 5) AS n, (VALUES (${velocity}::uuid), (${temperature}::uuid)) AS s(id)`;
+
+      expect(await countOf(velocity)).toBe(5);
+      expect(await countOf(temperature)).toBe(5);
+    });
+
+    it('does not count a reading skipped as already stored', async () => {
+      await reading(velocity, '2026-09-29T10:00:00Z', 2.31);
+
+      await prisma.$executeRaw`
+        INSERT INTO readings (series_id, timestamp, value)
+        VALUES (${velocity}::uuid, '2026-09-29T10:00:00Z', 2.31),
+               (${velocity}::uuid, '2026-09-29T10:10:00Z', 2.4)
+        ON CONFLICT DO NOTHING`;
+
+      expect(await countOf(velocity)).toBe(2);
+    });
+
+    it('follows deletes, and is not touched by a failed insert', async () => {
+      await reading(velocity, '2026-09-29T10:00:00Z', 1);
+      await reading(velocity, '2026-09-29T10:10:00Z', 2);
+      await expect(reading(velocity, '2026-09-29T10:20:00Z', 'NaN')).rejects.toThrow(
+        /readings_value_finite_check/,
+      );
+
+      await prisma.$executeRaw`DELETE FROM readings WHERE value = 1`;
+
+      expect(await countOf(velocity)).toBe(1);
+    });
+
+    it('refuses a negative count', async () => {
+      await expect(
+        prisma.$executeRaw`UPDATE time_series SET reading_count = -1 WHERE id = ${velocity}::uuid`,
+      ).rejects.toThrow(/time_series_reading_count_check/);
+    });
+
+    it('lets a point with series and readings be deleted', async () => {
+      await reading(velocity, '2026-09-29T10:00:00Z', 1);
+
+      await prisma.monitoringPoint.delete({ where: { id: point } });
+
+      expect(await prisma.timeSeries.count()).toBe(0);
+      expect(await prisma.reading.count()).toBe(0);
+    });
+  });
 });

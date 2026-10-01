@@ -22,7 +22,9 @@ export class OverviewRepository {
              (SELECT count(*) FROM sensors WHERE monitoring_point_id IN (SELECT id FROM p))::int
                AS sensors,
              (SELECT count(*) FROM t)::int AS "timeSeries",
-             (SELECT count(*) FROM readings WHERE series_id IN (SELECT id FROM t))::int AS readings`;
+             -- The count each series keeps, not millions of rows read on every visit.
+             (SELECT coalesce(sum(reading_count), 0) FROM time_series
+               WHERE id IN (SELECT id FROM t))::int AS readings`;
     return row;
   }
 }

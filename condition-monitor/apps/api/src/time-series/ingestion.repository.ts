@@ -149,10 +149,10 @@ export class IngestionRepository {
             WHERE r.value <> sent.value
             ORDER BY sent.at`;
 
+          // Kept by the readings triggers, already updated by the insert above.
           const totals = await tx.$queryRaw<{ seriesId: string; total: number }[]>`
-            SELECT series_id AS "seriesId", count(*)::int AS total
-            FROM readings WHERE series_id = ANY(${locked.map((series) => series.id)}::uuid[])
-            GROUP BY series_id`;
+            SELECT id AS "seriesId", reading_count AS total
+            FROM time_series WHERE id = ANY(${locked.map((series) => series.id)}::uuid[])`;
 
           const insertedOf = new Map(inserted.map((row) => [row.seriesId, row.inserted]));
           const totalOf = new Map(totals.map((row) => [row.seriesId, row.total]));
