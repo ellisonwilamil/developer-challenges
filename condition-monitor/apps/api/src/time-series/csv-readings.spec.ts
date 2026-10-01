@@ -159,14 +159,14 @@ describe('readCsv', () => {
     expect(fileErrorOf(result)).toMatch(/not valid CSV/);
   });
 
-  it('accepts 5,000 readings and refuses 5,001 as a whole (C8)', () => {
+  it('accepts 2,000 readings and refuses 2,001 as a whole (C8)', () => {
     const line = (n: number) =>
       `DX-0001,${new Date(Date.UTC(2026, 0, 1) + n * 60_000).toISOString()},velocity_rms,H,1`;
-    const lines = Array.from({ length: 5_001 }, (_, n) => line(n));
+    const lines = Array.from({ length: 2_001 }, (_, n) => line(n));
 
-    expect(readCsv(csv(HEADER, ...lines.slice(0, 5_000))).ok).toBe(true);
+    expect(readCsv(csv(HEADER, ...lines.slice(0, 2_000))).ok).toBe(true);
     expect(fileErrorOf(readCsv(csv(HEADER, ...lines)))).toBe(
-      'The file has 5,001 readings; at most 5,000 are accepted per file.',
+      'The file has 2,001 readings; at most 2,000 are accepted per file.',
     );
   });
 });

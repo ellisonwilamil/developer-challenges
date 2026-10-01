@@ -4,10 +4,11 @@ import { serialNumberSchema } from './point-schemas.js';
 
 /**
  * Readings accepted in one submission, JSON or CSV (assumption C8). The number comes from
- * the load test: a submission of this size is stored within the 350 ms latency limit,
- * and one of 10,000 is not (docs/performance.md).
+ * the load test: storing a submission of this size stays within the 350 ms latency
+ * limit with room to spare, one of 3,000 barely does and one of 5,000 does not
+ * (docs/performance.md).
  */
-export const MAX_READINGS_PER_SUBMISSION = 5_000;
+export const MAX_READINGS_PER_SUBMISSION = 2_000;
 
 /** Size of a CSV upload; the API answers 413 above it, the interface checks it first. */
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;

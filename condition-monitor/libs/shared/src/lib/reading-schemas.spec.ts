@@ -98,7 +98,7 @@ describe('ingestReadingsSchema', () => {
     expect(ingestReadingsSchema.safeParse({ readings }).success).toBe(true);
     const result = ingestReadingsSchema.safeParse({ readings: [...readings, valid] });
     expect(result.error?.issues.map((issue) => issue.message)).toEqual([
-      'At most 5,000 readings per submission.',
+      'At most 2,000 readings per submission.',
     ]);
   });
 

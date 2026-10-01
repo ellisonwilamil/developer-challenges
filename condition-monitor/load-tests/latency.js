@@ -53,7 +53,7 @@ const R = {
  * Instants of the largest submission, 7 readings each. The default is the most the API
  * accepts (C8); another size can be given to see how latency follows it.
  */
-const BULK_INSTANTS = Number(__ENV.BULK_INSTANTS || 714);
+const BULK_INSTANTS = Number(__ENV.BULK_INSTANTS || 285);
 R.ingestBulk = `POST /api/readings (${BULK_INSTANTS * 7} readings)`;
 
 const measured = { phase: 'measure' };
