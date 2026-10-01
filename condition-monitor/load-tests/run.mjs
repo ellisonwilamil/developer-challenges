@@ -46,6 +46,8 @@ try {
       `PASSWORD=${process.env.SEED_USER_PASSWORD}`,
       '-e',
       `BULK_INSTANTS=${process.env.BULK_INSTANTS ?? ''}`,
+      '-e',
+      `FORECAST_SHARE=${process.env.FORECAST_SHARE ?? ''}`,
       K6_IMAGE,
       'run',
       '--quiet',

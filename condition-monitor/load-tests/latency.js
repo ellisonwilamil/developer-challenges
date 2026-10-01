@@ -11,6 +11,8 @@ const WARMUP = '20s';
 const MEASURE = '2m';
 /** The sensor whose series are full (49,968 readings): read, never written to. */
 const FULL_SENSOR = 'LD-0001';
+/** The sensors the writers send to, LD-0061 to LD-0080: the other 60 are only read. */
+const WRITTEN = /^LD-00(6[1-9]|7\d|80)$/;
 
 /**
  * Route names, as templates, so every id of a route counts as one route. No commas: k6
@@ -43,6 +45,7 @@ const R = {
   series: 'GET /api/monitoring-points/:id/time-series',
   metrics: 'GET /api/time-series/:id/metrics',
   readings: 'GET /api/time-series/:id/readings',
+  forecast: 'GET /api/time-series/:id/forecast',
   deleteSeries: 'DELETE /api/time-series/:id',
   ingest: 'POST /api/readings (14 readings)',
   ingestBulk: '',
@@ -55,6 +58,12 @@ const R = {
  */
 const BULK_INSTANTS = Number(__ENV.BULK_INSTANTS || 285);
 R.ingestBulk = `POST /api/readings (${BULK_INSTANTS * 7} readings)`;
+
+/**
+ * Share of the visits to a point that turn the forecast on. The switch is off by default
+ * in the interface; half is a heavy guess, kept to measure the route under load.
+ */
+const FORECAST_SHARE = Number(__ENV.FORECAST_SHARE || 0.5);
 
 const measured = { phase: 'measure' };
 
@@ -172,10 +181,14 @@ export function setup() {
     run: Date.now().toString(36).slice(-5).toUpperCase(),
     sectorId: sector.id,
     machineIds: machines.map((machine) => machine.id),
-    pointIds: sensors.map((sensor) => sensor.monitoringPointId),
+    // Operators visit the points that receive no writes: their histories stay continuous
+    // up to the latest reading, so their forecasts are real ones.
+    pointIds: sensors
+      .filter((sensor) => !WRITTEN.test(sensor.serialNumber))
+      .map((sensor) => sensor.monitoringPointId),
     fullPointId: sensors.find((sensor) => sensor.serialNumber === FULL_SENSOR).monitoringPointId,
     writable: sensors
-      .filter((sensor) => sensor.serialNumber !== FULL_SENSOR)
+      .filter((sensor) => WRITTEN.test(sensor.serialNumber))
       .map((sensor) => sensor.serialNumber),
   };
 }
@@ -233,6 +246,18 @@ export function browse(data) {
   // The browser asks for the 14 at once.
   for (const response of http.batch(requests)) {
     check(response, { 'point page data answers 200': (r) => r.status === 200 });
+  }
+  // A share of the visits turns the forecast on: one request per series, at once too.
+  if (Math.random() < FORECAST_SHARE) {
+    const forecasts = series.map((item) => [
+      'GET',
+      `${API}/time-series/${item.id}/forecast`,
+      null,
+      { tags: { name: R.forecast } },
+    ]);
+    for (const response of http.batch(forecasts)) {
+      check(response, { 'forecast answers 200': (r) => r.status === 200 });
+    }
   }
   call('GET', `/sensors?serialNumber=${pick(data.writable)}`, R.sensors);
   think();
