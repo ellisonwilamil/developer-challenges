@@ -2,7 +2,6 @@ import type { CreateSectorRequest, Sector } from '@condition-monitor/shared';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -17,6 +16,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { SectorFormDialog } from './sector-form-dialog';
 import { createSector, deleteSector, fetchSectors, updateSector } from './sectors-slice';
@@ -67,16 +67,7 @@ export function SectorsPage() {
       </Box>
 
       {status === 'failed' && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => void dispatch(fetchSectors())}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
+        <RetryAlert message={error} onRetry={() => void dispatch(fetchSectors())} />
       )}
       {(status === 'idle' || status === 'loading') && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

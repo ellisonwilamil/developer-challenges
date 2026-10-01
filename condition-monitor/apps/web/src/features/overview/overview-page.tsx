@@ -1,13 +1,13 @@
 import type { Overview } from '@condition-monitor/shared';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useEffect, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router';
+import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchOverview } from './overview-slice';
 
@@ -86,17 +86,7 @@ export function OverviewPage() {
       </Typography>
 
       {status === 'failed' && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <Button color="inherit" size="small" onClick={() => void dispatch(fetchOverview())}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
+        <RetryAlert message={error} onRetry={() => void dispatch(fetchOverview())} sx={{ mb: 2 }} />
       )}
       {!counts && status !== 'failed' && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>

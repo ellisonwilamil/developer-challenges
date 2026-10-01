@@ -10,7 +10,6 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import SensorsOffIcon from '@mui/icons-material/SensorsOff';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Button from '@mui/material/Button';
@@ -30,6 +29,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { MachineFormDialog } from '../machines/machine-form-dialog';
 import { deleteMachine, fetchNextNumber, updateMachine } from '../machines/machines-slice';
@@ -86,22 +86,7 @@ export function MachineDetailPage() {
   );
 
   if (status === 'failed' && !detail) {
-    return (
-      <Alert
-        severity="error"
-        action={
-          <Button
-            color="inherit"
-            size="small"
-            onClick={() => void dispatch(fetchMachineDetail(id))}
-          >
-            Retry
-          </Button>
-        }
-      >
-        {error}
-      </Alert>
-    );
+    return <RetryAlert message={error} onRetry={() => void dispatch(fetchMachineDetail(id))} />;
   }
   if (!detail || detail.id !== id) {
     return (

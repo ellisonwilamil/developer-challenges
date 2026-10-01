@@ -1,7 +1,5 @@
 import { locationLabel, type PointSortKey } from '@condition-monitor/shared';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
@@ -14,6 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router';
+import { RetryAlert } from '../../components/retry-alert';
 import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchPoints, type PointsQuery } from './monitoring-points-slice';
@@ -55,18 +54,7 @@ export function MonitoringPointsPage() {
         Monitoring points
       </Typography>
 
-      {status === 'failed' && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => void load({})}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      )}
+      {status === 'failed' && <RetryAlert message={error} onRetry={() => void load({})} />}
       {status !== 'failed' && !page && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress aria-label="Loading monitoring points" />

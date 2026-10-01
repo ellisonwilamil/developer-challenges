@@ -26,6 +26,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { RetryAlert } from '../../components/retry-alert';
 import { SortableTableHead, type SortableColumn } from '../../components/sortable-table-head';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchSectors } from '../sectors/sectors-slice';
@@ -152,18 +153,7 @@ export function MachinesPage() {
           first.
         </Alert>
       )}
-      {status === 'failed' && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => void load({})}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      )}
+      {status === 'failed' && <RetryAlert message={error} onRetry={() => void load({})} />}
       {status !== 'failed' && !page && (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress aria-label="Loading machines" />

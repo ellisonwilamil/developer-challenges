@@ -1,9 +1,8 @@
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
+import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchSession } from './session-slice';
 
@@ -32,16 +31,7 @@ export function RequireSession() {
   if (error) {
     return (
       <Box sx={{ p: 3, maxWidth: 480, mx: 'auto' }}>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => void dispatch(fetchSession())}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
+        <RetryAlert message={error} onRetry={() => void dispatch(fetchSession())} />
       </Box>
     );
   }

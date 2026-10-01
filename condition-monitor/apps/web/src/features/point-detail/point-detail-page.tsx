@@ -8,7 +8,6 @@ import {
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
@@ -28,6 +27,7 @@ import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router';
 import { ConfirmDialog } from '../../components/confirm-dialog';
+import { RetryAlert } from '../../components/retry-alert';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   deleteSeries,
@@ -150,18 +150,7 @@ export function PointDetailPage() {
   }, [dispatch, forecast.shown, status, series]);
 
   if (status === 'failed') {
-    return (
-      <Alert
-        severity="error"
-        action={
-          <Button color="inherit" size="small" onClick={() => void dispatch(fetchPointDetail(id))}>
-            Retry
-          </Button>
-        }
-      >
-        {error}
-      </Alert>
-    );
+    return <RetryAlert message={error} onRetry={() => void dispatch(fetchPointDetail(id))} />;
   }
   if (!point || point.id !== id) {
     return (
