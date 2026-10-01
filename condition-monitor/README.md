@@ -154,6 +154,7 @@ Entities, relations and database rules in [docs/domain-model.md](docs/domain-mod
 Components, workspace layout and data flows in [docs/architecture.md](docs/architecture.md).
 REST endpoints, payloads and error format in [docs/api-contract.md](docs/api-contract.md).
 Latency measurements, their method and what they changed in [docs/performance.md](docs/performance.md).
+How the forecast model was chosen, by measurement, in [docs/forecast-study.md](docs/forecast-study.md).
 
 ## Changing the database schema
 
