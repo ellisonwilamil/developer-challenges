@@ -17,3 +17,4 @@ consequences accepted.
 | [0010](0010-testing-strategy.md) | Testing strategy |
 | [0011](0011-k6-load-tests.md) | k6 in Docker for load tests |
 | [0012](0012-forecast.md) | Forecast by linear autoregression, cached in memory |
+| [0013](0013-cypress-e2e.md) | Cypress for end-to-end tests |

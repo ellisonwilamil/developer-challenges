@@ -26,6 +26,7 @@ tests and screen:
 | Simulator | done: backfill and live telemetry for the installed sensors, through the API |
 | Latency measurement | done: every route answers 99 % of its requests below 350 ms under load, measured with 2.7 million readings |
 | Forecast (bonus) | done: the next 24 hours of each series, with a measured uncertainty band, on the monitoring point screen |
+| End-to-end tests (bonus) | done: Cypress drives the real application through the full user flow and an adversarial suite that tries to break it |
 
 ## Stack
 
@@ -183,9 +184,11 @@ not used, since it would drop those hand-written rules
 | `npm run lint` | ESLint, including module boundary rules between projects | nothing |
 | `npm run typecheck` | TypeScript in strict mode | nothing |
 | `npm run format:check` | Prettier | nothing |
+| `npm run e2e` | Cypress against the built application over its own database | `docker compose up -d` |
 
 Integration tests always use `DATABASE_URL_TEST`, never the development database
-([ADR 0010](docs/adr/0010-testing-strategy.md)).
+([ADR 0010](docs/adr/0010-testing-strategy.md)). The end-to-end tests use a third
+database, `condition_monitor_e2e`, recreated on each run ([ADR 0013](docs/adr/0013-cypress-e2e.md)).
 
 ### Load test
 
@@ -216,6 +219,10 @@ then lint, unit tests, type check and build of every project, and the integratio
 against a PostgreSQL 16 service. GitHub reads workflows only from the repository root,
 which is why the file lives there.
 
+A second job, `e2e`, builds the application and runs the Cypress suite against a
+database of its own, under a virtual display; it caches the Cypress binary, which the
+`check` job skips, since only this job runs the browser.
+
 ## Known issues
 
 ### Dependency audit
@@ -234,6 +241,11 @@ neither change brought an advisory of its own:
 | `uuid` | `webpack-dev-server` | development server the API does not use; the advisory covers v3, v5 and v6 with a buffer, not the v4 it calls |
 | `esbuild` | Vite, simulator build | affects esbuild's own development server on Windows, which is not used |
 | `axios` | Nx | loaded only for Nx Cloud, `nx release` and Nx's setup prompts; this workspace uses none of them |
+| Cypress and its tree | the end-to-end test runner | a development dependency; it runs the tests and is in no build output, so none of its advisories reach the application |
+
+Adding Cypress raised the advisory count sharply, all of it inside Cypress's own
+tooling tree. Cypress is a development dependency used only to run the end-to-end tests;
+it is absent from every build output, so none of those advisories ship.
 
 `npm audit --omit=dev` still lists the Prisma CLI, because `@prisma/client` declares it
 as a peer dependency and npm then counts it as a production package. The built API
